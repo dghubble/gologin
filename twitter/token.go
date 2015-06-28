@@ -1,10 +1,10 @@
 package twitter
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
-	"github.com/dghubble/go-login"
+	login "github.com/dghubble/go-login"
 	"github.com/dghubble/go-twitter/twitter"
 )
 
@@ -13,9 +13,10 @@ const (
 	accessTokenSecretField = "twitterTokenSecret"
 )
 
-// Errors indicating User credentials could not be verified.
+// TokenHandler errors.
 var (
-	ErrUnableToGetTwitterUser = errors.New("twitter: unable to get Twitter user")
+	ErrMissingToken       = fmt.Errorf("twitter: missing token field %s", accessTokenField)
+	ErrMissingTokenSecret = fmt.Errorf("twitter: missing token field %s", accessTokenSecretField)
 )
 
 // AuthClientSource is an interface for sources of oauth1 token authorized
@@ -54,20 +55,28 @@ func NewTokenHandler(config *TokenHandlerConfig) *TokenHandler {
 // credentials. If successful, handling is delegated to the SuccessHandler.
 // Otherwise, the ErrorHandler is called.
 func (h *TokenHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if req.Method != "POST" {
+		h.failure.ServeHTTP(w, nil, http.StatusMethodNotAllowed)
+		return
+	}
 	req.ParseForm()
 	accessToken := req.PostForm.Get(accessTokenField)
 	accessTokenSecret := req.PostForm.Get(accessTokenSecretField)
+	err := validateToken(accessToken, accessTokenSecret)
+	if err != nil {
+		h.failure.ServeHTTP(w, err, http.StatusBadRequest)
+		return
+	}
+	// verify Twitter access token
 	httpClient := h.authConfig.GetClient(accessToken, accessTokenSecret)
 	twitterClient := twitter.NewClient(httpClient)
-
-	// verify Twitter access token
 	accountVerifyParams := &twitter.AccountVerifyParams{
 		IncludeEntities: twitter.Bool(false),
 		SkipStatus:      twitter.Bool(true),
 		IncludeEmail:    twitter.Bool(false),
 	}
 	user, resp, err := twitterClient.Accounts.VerifyCredentials(accountVerifyParams)
-	err = validateAccountResponse(user, resp, err)
+	err = validateResponse(user, resp, err)
 	if err != nil {
 		h.failure.ServeHTTP(w, err, http.StatusBadRequest)
 		return
@@ -75,28 +84,13 @@ func (h *TokenHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	h.success.ServeHTTP(w, req, user)
 }
 
-// SuccessHandler is called when authentication via Twitter succeeds.
-type SuccessHandler interface {
-	ServeHTTP(w http.ResponseWriter, req *http.Request, user *twitter.User)
-}
-
-// SuccessHandlerFunc is an adapter to allow an ordinary function to be used as
-// a SuccessHandler.
-type SuccessHandlerFunc func(w http.ResponseWriter, req *http.Request, user *twitter.User)
-
-func (f SuccessHandlerFunc) ServeHTTP(w http.ResponseWriter, req *http.Request, user *twitter.User) {
-	f(w, req, user)
-}
-
-// validateAccountResponse returns an error if the given Twitter user, raw
-// http.Response, or error are unexpected. Returns nil if they are valid.
-func validateAccountResponse(user *twitter.User, resp *http.Response, err error) error {
-	if err != nil || resp.StatusCode != http.StatusOK || user == nil {
-		return ErrUnableToGetTwitterUser
+// validateToken returns an error if the token or token secret is missing.
+func validateToken(token, secret string) error {
+	if token == "" {
+		return ErrMissingToken
 	}
-	if user.ID == 0 || user.IDStr == "" {
-		// JSON deserialized Twitter User is missing fields
-		return ErrUnableToGetTwitterUser
+	if secret == "" {
+		return ErrMissingTokenSecret
 	}
 	return nil
 }
