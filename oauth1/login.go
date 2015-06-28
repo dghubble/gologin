@@ -36,15 +36,15 @@ func NewLoginHandler(config *Config) *LoginHandler {
 	if failure == nil {
 		failure = gologin.DefaultErrorHandler
 	}
-	loginMux := &LoginHandler{
+	loginHandler := &LoginHandler{
 		mux:          mux,
 		oauth1Config: config.OAuth1Config,
 		success:      config.Success,
 		failure:      failure,
 	}
-	mux.Handle("/login", loginMux.RequestLoginHandler())
-	mux.Handle("/callback", loginMux.CallbackHandler())
-	return loginMux
+	mux.Handle("/login", loginHandler.RequestLoginHandler())
+	mux.Handle("/callback", loginHandler.CallbackHandler())
+	return loginHandler
 }
 
 func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -87,17 +87,4 @@ func (h *LoginHandler) CallbackHandler() http.Handler {
 		h.success.ServeHTTP(w, req, accessToken.Token, accessToken.TokenSecret)
 	}
 	return http.HandlerFunc(fn)
-}
-
-// SuccessHandler is called when OAuth1 authentication succeeds.
-type SuccessHandler interface {
-	ServeHTTP(w http.ResponseWriter, req *http.Request, token, secret string)
-}
-
-// SuccessHandlerFunc is an adapter to allow an ordinary function to be used as
-// a SuccessHandler.
-type SuccessHandlerFunc func(w http.ResponseWriter, req *http.Request, token, secret string)
-
-func (f SuccessHandlerFunc) ServeHTTP(w http.ResponseWriter, req *http.Request, token, secret string) {
-	f(w, req, token, secret)
 }
