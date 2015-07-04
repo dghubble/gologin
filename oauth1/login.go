@@ -32,11 +32,15 @@ type LoginHandler struct {
 // NewLoginHandler returns a new LoginHandler.
 func NewLoginHandler(config *Config) *LoginHandler {
 	mux := http.NewServeMux()
+	failure := config.Failure
+	if failure == nil {
+		failure = gologin.DefaultErrorHandler
+	}
 	loginMux := &LoginHandler{
 		mux:          mux,
 		oauth1Config: config.OAuth1Config,
 		success:      config.Success,
-		failure:      config.Failure,
+		failure:      failure,
 	}
 	mux.Handle("/login", loginMux.RequestLoginHandler())
 	mux.Handle("/callback", loginMux.CallbackHandler())

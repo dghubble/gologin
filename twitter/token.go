@@ -44,10 +44,14 @@ type TokenHandler struct {
 
 // NewTokenHandler returns a new TokenHandler.
 func NewTokenHandler(config *TokenHandlerConfig) *TokenHandler {
+	failure := config.Failure
+	if failure == nil {
+		failure = gologin.DefaultErrorHandler
+	}
 	return &TokenHandler{
 		oauth1Config: config.OAuth1Config,
 		success:      config.Success,
-		failure:      config.Failure,
+		failure:      failure,
 	}
 }
 
