@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	login "github.com/dghubble/go-login"
 	"github.com/dghubble/go-twitter/twitter"
+	"github.com/dghubble/gologin"
 )
 
 const (
@@ -30,7 +30,7 @@ type AuthClientSource interface {
 type TokenHandlerConfig struct {
 	OAuth1Config AuthClientSource
 	Success      SuccessHandler
-	Failure      login.ErrorHandler
+	Failure      gologin.ErrorHandler
 }
 
 // TokenHandler receives a POSTed Twitter token/secret and verifies the Twitter
@@ -39,7 +39,7 @@ type TokenHandlerConfig struct {
 type TokenHandler struct {
 	oauth1Config AuthClientSource
 	success      SuccessHandler
-	failure      login.ErrorHandler
+	failure      gologin.ErrorHandler
 }
 
 // NewTokenHandler returns a new TokenHandler.

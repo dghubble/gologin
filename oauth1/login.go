@@ -5,7 +5,7 @@ package oauth1
 import (
 	"net/http"
 
-	"github.com/dghubble/go-login"
+	"github.com/dghubble/gologin"
 	"github.com/dghubble/oauth1"
 )
 
@@ -16,7 +16,7 @@ import (
 type Config struct {
 	OAuth1Config *oauth1.Config
 	Success      SuccessHandler
-	Failure      login.ErrorHandler
+	Failure      gologin.ErrorHandler
 }
 
 // LoginHandler handles OAuth1 login and callback requests. If authentication
@@ -26,7 +26,7 @@ type LoginHandler struct {
 	*http.ServeMux
 	oauth1Config *oauth1.Config
 	success      SuccessHandler
-	failure      login.ErrorHandler
+	failure      gologin.ErrorHandler
 }
 
 // NewLoginHandler returns a new LoginHandler.

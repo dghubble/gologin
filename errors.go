@@ -1,4 +1,4 @@
-package login
+package gologin
 
 import (
 	"net/http"

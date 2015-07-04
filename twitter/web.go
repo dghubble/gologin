@@ -3,9 +3,9 @@ package twitter
 import (
 	"net/http"
 
-	"github.com/dghubble/go-login"
-	oauth1Login "github.com/dghubble/go-login/oauth1"
 	"github.com/dghubble/go-twitter/twitter"
+	"github.com/dghubble/gologin"
+	oauth1Login "github.com/dghubble/gologin/oauth1"
 	"github.com/dghubble/oauth1"
 )
 
@@ -13,7 +13,7 @@ import (
 type LoginHandlerConfig struct {
 	OAuth1Config *oauth1.Config
 	Success      SuccessHandler
-	Failure      login.ErrorHandler
+	Failure      gologin.ErrorHandler
 }
 
 // LoginHandler handles Twitter OAuth1 login and callback requests. If
@@ -23,7 +23,7 @@ type LoginHandlerConfig struct {
 type LoginHandler struct {
 	oauth1Config *oauth1.Config
 	success      SuccessHandler
-	failure      login.ErrorHandler
+	failure      gologin.ErrorHandler
 }
 
 // NewLoginHandler returns a new LoginHandler.

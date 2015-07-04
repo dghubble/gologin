@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"testing"
 
-	login "github.com/dghubble/go-login"
-	"github.com/dghubble/go-login/logintest"
+	"github.com/dghubble/gologin"
+	"github.com/dghubble/gologin/logintest"
 )
 
 func TestTokenHandler_successEndToEnd(t *testing.T) {
@@ -19,7 +19,7 @@ func TestTokenHandler_successEndToEnd(t *testing.T) {
 	handlerConfig := &TokenHandlerConfig{
 		OAuth1Config: proxyClientSource,
 		Success:      SuccessHandlerFunc(successChecks(t)),
-		Failure:      login.ErrorHandlerFunc(logintest.ErrorOnFailure(t)),
+		Failure:      gologin.ErrorHandlerFunc(logintest.ErrorOnFailure(t)),
 	}
 	// server under test, which uses go-login/twitter TokenHandler
 	ts := httptest.NewServer(NewTokenHandler(handlerConfig))
@@ -41,7 +41,7 @@ func TestTokenHandler_wrongMethod(t *testing.T) {
 	handlerConfig := &TokenHandlerConfig{
 		OAuth1Config: proxyClientSource,
 		Success:      SuccessHandlerFunc(errorOnSuccess(t)),
-		Failure:      login.DefaultErrorHandler,
+		Failure:      gologin.DefaultErrorHandler,
 	}
 	ts := httptest.NewServer(NewTokenHandler(handlerConfig))
 	resp, _ := http.Get(ts.URL)
@@ -58,7 +58,7 @@ func TestTokenHandler_invalidPOSTField(t *testing.T) {
 	handlerConfig := &TokenHandlerConfig{
 		OAuth1Config: proxyClientSource,
 		Success:      SuccessHandlerFunc(errorOnSuccess(t)),
-		Failure:      login.DefaultErrorHandler,
+		Failure:      gologin.DefaultErrorHandler,
 	}
 	ts := httptest.NewServer(NewTokenHandler(handlerConfig))
 	// POST token to server under test
@@ -78,7 +78,7 @@ func TestTokenHandler_unauthorized(t *testing.T) {
 	handlerConfig := &TokenHandlerConfig{
 		OAuth1Config: proxyClientSource,
 		Success:      SuccessHandlerFunc(errorOnSuccess(t)),
-		Failure:      login.DefaultErrorHandler,
+		Failure:      gologin.DefaultErrorHandler,
 	}
 	ts := httptest.NewServer(NewTokenHandler(handlerConfig))
 	resp, _ := http.PostForm(ts.URL, url.Values{accessTokenField: {testTwitterToken}, accessTokenSecretField: {testTwitterTokenSecret}})
@@ -94,7 +94,7 @@ func TestTokenHandler_whenValidationServerDown(t *testing.T) {
 	handlerConfig := &TokenHandlerConfig{
 		OAuth1Config: proxyClientSource,
 		Success:      SuccessHandlerFunc(errorOnSuccess(t)),
-		Failure:      login.DefaultErrorHandler,
+		Failure:      gologin.DefaultErrorHandler,
 	}
 	ts := httptest.NewServer(NewTokenHandler(handlerConfig))
 	resp, _ := http.PostForm(ts.URL, url.Values{accessTokenField: {testTwitterToken}, accessTokenSecretField: {testTwitterTokenSecret}})

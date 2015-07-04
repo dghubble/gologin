@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/dghubble/go-login/logintest"
 	"github.com/dghubble/go-twitter/twitter"
+	"github.com/dghubble/gologin/logintest"
 )
 
 const (
