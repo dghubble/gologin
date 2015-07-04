@@ -11,7 +11,9 @@ import (
 )
 
 const (
-	testTwitterUserJSON = `{"id": 1234, "id_str": "1234", "screen_name": "somename"}`
+	testTwitterToken       = "some-token"
+	testTwitterTokenSecret = "some-token-secret"
+	testTwitterUserJSON    = `{"id": 1234, "id_str": "1234", "screen_name": "somename"}`
 )
 
 func newTwitterTestServer(jsonData string) (*http.Client, *http.ServeMux, *httptest.Server) {
@@ -31,19 +33,25 @@ func newRejectingTestServer() (*http.Client, *http.ServeMux, *httptest.Server) {
 	return client, mux, server
 }
 
-// successChecks is a SuccessHandler which checks that the testTwitterUserJSON
-// User was passed.
-func successChecks(t *testing.T) func(w http.ResponseWriter, req *http.Request, user *twitter.User) {
-	return func(w http.ResponseWriter, req *http.Request, user *twitter.User) {
+// successChecks is a SuccessHandler which checks that the test Twitter User
+// and test token/secret were passed.
+func successChecks(t *testing.T) func(w http.ResponseWriter, req *http.Request, user *twitter.User, token, tokenSecret string) {
+	return func(w http.ResponseWriter, req *http.Request, user *twitter.User, token, tokenSecret string) {
 		if user.ID != 1234 || user.IDStr != "1234" {
 			t.Errorf("expected SuccessHandler to receive Twitter User, got %+v", user)
+		}
+		if token != testTwitterToken {
+			t.Errorf("expected SuccessHandler to receive token %v, got %v", testTwitterToken, token)
+		}
+		if tokenSecret != testTwitterTokenSecret {
+			t.Errorf("expected SuccessHandler to receive token secret %v, got %v", testTwitterTokenSecret, tokenSecret)
 		}
 		return
 	}
 }
 
-func errorOnSuccess(t *testing.T) func(w http.ResponseWriter, req *http.Request, user *twitter.User) {
-	return func(w http.ResponseWriter, req *http.Request, user *twitter.User) {
-		t.Errorf("unexpected SuccessHandler call with User %v", user)
+func errorOnSuccess(t *testing.T) func(w http.ResponseWriter, req *http.Request, user *twitter.User, token, tokenSecret string) {
+	return func(w http.ResponseWriter, req *http.Request, user *twitter.User, token, tokenSecret string) {
+		t.Errorf("unexpected SuccessHandler call")
 	}
 }

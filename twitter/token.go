@@ -28,26 +28,26 @@ type AuthClientSource interface {
 
 // TokenHandlerConfig configures a TokenHandler.
 type TokenHandlerConfig struct {
-	AuthConfig AuthClientSource
-	Success    SuccessHandler
-	Failure    login.ErrorHandler
+	OAuth1Config AuthClientSource
+	Success      SuccessHandler
+	Failure      login.ErrorHandler
 }
 
 // TokenHandler receives a POSTed Twitter token/secret and verifies the Twitter
 // credentials. If successful, handling is delegated to the SuccessHandler.
 // Otherwise, the ErrorHandler is called.
 type TokenHandler struct {
-	authConfig AuthClientSource
-	success    SuccessHandler
-	failure    login.ErrorHandler
+	oauth1Config AuthClientSource
+	success      SuccessHandler
+	failure      login.ErrorHandler
 }
 
 // NewTokenHandler returns a new TokenHandler.
 func NewTokenHandler(config *TokenHandlerConfig) *TokenHandler {
 	return &TokenHandler{
-		authConfig: config.AuthConfig,
-		success:    config.Success,
-		failure:    config.Failure,
+		oauth1Config: config.OAuth1Config,
+		success:      config.Success,
+		failure:      config.Failure,
 	}
 }
 
@@ -68,7 +68,7 @@ func (h *TokenHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	// verify Twitter access token
-	httpClient := h.authConfig.GetClient(accessToken, accessTokenSecret)
+	httpClient := h.oauth1Config.GetClient(accessToken, accessTokenSecret)
 	twitterClient := twitter.NewClient(httpClient)
 	accountVerifyParams := &twitter.AccountVerifyParams{
 		IncludeEntities: twitter.Bool(false),
@@ -81,7 +81,7 @@ func (h *TokenHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		h.failure.ServeHTTP(w, err, http.StatusBadRequest)
 		return
 	}
-	h.success.ServeHTTP(w, req, user)
+	h.success.ServeHTTP(w, req, user, accessToken, accessTokenSecret)
 }
 
 // validateToken returns an error if the token or token secret is missing.

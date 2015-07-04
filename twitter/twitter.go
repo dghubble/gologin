@@ -14,15 +14,15 @@ var (
 
 // SuccessHandler is called when authentication via Twitter succeeds.
 type SuccessHandler interface {
-	ServeHTTP(w http.ResponseWriter, req *http.Request, user *twitter.User)
+	ServeHTTP(w http.ResponseWriter, req *http.Request, user *twitter.User, token, tokenSecret string)
 }
 
 // SuccessHandlerFunc is an adapter to allow an ordinary function to be used as
 // a SuccessHandler.
-type SuccessHandlerFunc func(w http.ResponseWriter, req *http.Request, user *twitter.User)
+type SuccessHandlerFunc func(w http.ResponseWriter, req *http.Request, user *twitter.User, token, tokenSecret string)
 
-func (f SuccessHandlerFunc) ServeHTTP(w http.ResponseWriter, req *http.Request, user *twitter.User) {
-	f(w, req, user)
+func (f SuccessHandlerFunc) ServeHTTP(w http.ResponseWriter, req *http.Request, user *twitter.User, token, tokenSecret string) {
+	f(w, req, user, token, tokenSecret)
 }
 
 // validateResponse returns an error if the given Twitter user, raw
