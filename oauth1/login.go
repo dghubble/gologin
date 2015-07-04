@@ -23,7 +23,7 @@ type Config struct {
 // succeeds, handling is delegated to a SuccessHandler. Otherwise, an
 // ErrorHandler handles responding.
 type LoginHandler struct {
-	*http.ServeMux
+	mux          *http.ServeMux
 	oauth1Config *oauth1.Config
 	success      SuccessHandler
 	failure      gologin.ErrorHandler
@@ -33,14 +33,18 @@ type LoginHandler struct {
 func NewLoginHandler(config *Config) *LoginHandler {
 	mux := http.NewServeMux()
 	loginMux := &LoginHandler{
-		ServeMux:     mux,
+		mux:          mux,
 		oauth1Config: config.OAuth1Config,
 		success:      config.Success,
 		failure:      config.Failure,
 	}
-	loginMux.Handle("/login", loginMux.RequestLoginHandler())
-	loginMux.Handle("/callback", loginMux.CallbackHandler())
+	mux.Handle("/login", loginMux.RequestLoginHandler())
+	mux.Handle("/callback", loginMux.CallbackHandler())
 	return loginMux
+}
+
+func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	h.mux.ServeHTTP(w, req)
 }
 
 // RequestLoginHandler handles OAuth1 login requests by obtaining a request
