@@ -1,14 +1,13 @@
-package login
+package digits
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
-	"github.com/dghubble/go-digits/digits"
+	"github.com/dghubble/gologin"
+	"github.com/dghubble/gologin/logintest"
 )
 
 const (
@@ -82,68 +81,20 @@ func TestValidateEcho_headerConsumerKey(t *testing.T) {
 	}
 }
 
-func TestValidateAccountResponse(t *testing.T) {
-	emptyAccount := new(digits.Account)
-	validAccount := &digits.Account{
-		AccessToken: digits.AccessToken{Token: "token", Secret: "secret"},
-	}
-	successResp := &http.Response{
-		StatusCode: 200,
-	}
-	badResp := &http.Response{
-		StatusCode: 400,
-	}
-	respErr := errors.New("some error decoding Account")
-
-	// success case
-	if err := validateAccountResponse(validAccount, successResp, nil); err != nil {
-		t.Errorf("expected error to be nil, got %v", err)
-	}
-
-	// error cases
-	errorCases := []error{
-		// account missing credentials
-		validateAccountResponse(emptyAccount, successResp, nil),
-		// Digits account API did not return a 200
-		validateAccountResponse(validAccount, badResp, nil),
-		// Network error or JSON unmarshalling error
-		validateAccountResponse(validAccount, successResp, respErr),
-		validateAccountResponse(validAccount, badResp, respErr),
-	}
-	for _, err := range errorCases {
-		if err != ErrUnableToGetDigitsAccount {
-			t.Errorf("expected %v, got %v", ErrUnableToGetDigitsAccount, err)
-		}
-	}
-}
-
-func TestErrorHandler(t *testing.T) {
-	const expectedMessage = "digits: some error"
-	rec := httptest.NewRecorder()
-	// should pass through errors and codes
-	DefaultErrorHandler.ServeHTTP(rec, fmt.Errorf(expectedMessage), http.StatusBadRequest)
-	if rec.Code != http.StatusBadRequest {
-		t.Errorf("expected code %v, got %v", http.StatusBadRequest, rec.Code)
-	}
-	if rec.Body.String() != expectedMessage+"\n" {
-		t.Errorf("expected error message %v, got %v", expectedMessage+"\n", rec.Body.String())
-	}
-}
-
 func TestWebHandler_successEndToEnd(t *testing.T) {
 	proxyClient, _, server := newDigitsTestServer(testAccountJSON)
 	defer server.Close()
 
-	handlerConfig := &WebHandlerConfig{
+	handlerConfig := &LoginHandlerConfig{
 		ConsumerKey: testConsumerKey,
 		HTTPClient:  proxyClient,
 		Success:     SuccessHandlerFunc(successChecks(t)),
-		Failure:     ErrorHandlerFunc(errorOnFailure(t)),
+		Failure:     gologin.ErrorHandlerFunc(logintest.ErrorOnFailure(t)),
 	}
 	// setup server under test
-	ts := httptest.NewServer(NewWebHandler(handlerConfig))
+	ts := httptest.NewServer(NewLoginHandler(handlerConfig))
 	// POST OAuth Echo data
-	resp, err := http.PostForm(ts.URL, url.Values{"accountEndpoint": {testAccountEndpoint}, "accountRequestHeader": {testAccountRequestHeader}})
+	resp, err := http.PostForm(ts.URL, url.Values{accountEndpointField: {testAccountEndpoint}, accountRequestHeaderField: {testAccountRequestHeader}})
 	if err != nil {
 		t.Errorf("unexpected error %v", err)
 	}
@@ -156,13 +107,13 @@ func TestWebHandler_wrongMethod(t *testing.T) {
 	proxyClient, _, server := newDigitsTestServer(testAccountJSON)
 	defer server.Close()
 
-	handlerConfig := &WebHandlerConfig{
+	handlerConfig := &LoginHandlerConfig{
 		ConsumerKey: testConsumerKey,
 		HTTPClient:  proxyClient,
 		Success:     SuccessHandlerFunc(errorOnSuccess(t)),
-		Failure:     DefaultErrorHandler,
+		Failure:     gologin.DefaultErrorHandler,
 	}
-	ts := httptest.NewServer(NewWebHandler(handlerConfig))
+	ts := httptest.NewServer(NewLoginHandler(handlerConfig))
 	resp, _ := http.Get(ts.URL)
 	if resp.StatusCode != http.StatusMethodNotAllowed {
 		t.Errorf("expected response code %d, got %d", http.StatusMethodNotAllowed, resp.StatusCode)
@@ -173,85 +124,53 @@ func TestWebHandler_invalidPOSTArguments(t *testing.T) {
 	proxyClient, _, server := newDigitsTestServer(testAccountJSON)
 	defer server.Close()
 
-	handlerConfig := &WebHandlerConfig{
+	handlerConfig := &LoginHandlerConfig{
 		ConsumerKey: testConsumerKey,
 		HTTPClient:  proxyClient,
 		Success:     SuccessHandlerFunc(errorOnSuccess(t)),
-		Failure:     DefaultErrorHandler,
+		Failure:     gologin.DefaultErrorHandler,
 	}
-	ts := httptest.NewServer(NewWebHandler(handlerConfig))
+	ts := httptest.NewServer(NewLoginHandler(handlerConfig))
 	// POST Digits OAuth Echo data
-	resp, _ := http.PostForm(ts.URL, url.Values{"wrongKeyName": {testAccountEndpoint}, "accountRequestHeader": {testAccountRequestHeader}})
-	assertBodyString(t, resp.Body, ErrMissingAccountEndpoint.Error()+"\n")
-	resp, _ = http.PostForm(ts.URL, url.Values{"accountEndpoint": {"https://evil.com"}, "accountRequestHeader": {testAccountRequestHeader}})
-	assertBodyString(t, resp.Body, ErrInvalidDigitsEndpoint.Error()+"\n")
-	resp, _ = http.PostForm(ts.URL, url.Values{"accountEndpoint": {testAccountEndpoint}, "accountRequestHeader": {`OAuth oauth_consumer_key="notmyconsumerkey",`}})
-	assertBodyString(t, resp.Body, ErrInvalidConsumerKey.Error()+"\n")
+	resp, _ := http.PostForm(ts.URL, url.Values{"wrongKeyName": {testAccountEndpoint}, accountRequestHeaderField: {testAccountRequestHeader}})
+	logintest.AssertBodyString(t, resp.Body, ErrMissingAccountEndpoint.Error()+"\n")
+	resp, _ = http.PostForm(ts.URL, url.Values{accountEndpointField: {"https://evil.com"}, accountRequestHeaderField: {testAccountRequestHeader}})
+	logintest.AssertBodyString(t, resp.Body, ErrInvalidDigitsEndpoint.Error()+"\n")
+	resp, _ = http.PostForm(ts.URL, url.Values{accountEndpointField: {testAccountEndpoint}, accountRequestHeaderField: {`OAuth oauth_consumer_key="notmyconsumerkey",`}})
+	logintest.AssertBodyString(t, resp.Body, ErrInvalidConsumerKey.Error()+"\n")
 	// valid, but incorrect Digits account endpoint
-	resp, _ = http.PostForm(ts.URL, url.Values{"accountEndpoint": {"https://api.digits.com/1.1/wrong.json"}, "accountRequestHeader": {testAccountRequestHeader}})
-	assertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
+	resp, _ = http.PostForm(ts.URL, url.Values{accountEndpointField: {"https://api.digits.com/1.1/wrong.json"}, accountRequestHeaderField: {testAccountRequestHeader}})
+	logintest.AssertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
 }
 
 func TestWebHandler_unauthorized(t *testing.T) {
-	proxyClient, _, server := newRejectingTestServer()
+	proxyClient, server := logintest.UnauthorizedTestServer()
 	defer server.Close()
 
-	handlerConfig := &WebHandlerConfig{
+	handlerConfig := &LoginHandlerConfig{
 		ConsumerKey: testConsumerKey,
 		HTTPClient:  proxyClient,
 		Success:     SuccessHandlerFunc(errorOnSuccess(t)),
-		Failure:     DefaultErrorHandler,
+		Failure:     gologin.DefaultErrorHandler,
 	}
-	ts := httptest.NewServer(NewWebHandler(handlerConfig))
+	ts := httptest.NewServer(NewLoginHandler(handlerConfig))
 	// POST OAuth Echo data
-	resp, _ := http.PostForm(ts.URL, url.Values{"accountEndpoint": {testAccountEndpoint}, "accountRequestHeader": {testAccountRequestHeader}})
-	assertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
+	resp, _ := http.PostForm(ts.URL, url.Values{accountEndpointField: {testAccountEndpoint}, accountRequestHeaderField: {testAccountRequestHeader}})
+	logintest.AssertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
 }
 
 func TestWebHandler_digitsAPIDown(t *testing.T) {
-	// NoOp server
-	client, _, server := testServer()
+	client, _, server := logintest.TestServer()
 	defer server.Close()
 
-	handlerConfig := &WebHandlerConfig{
+	handlerConfig := &LoginHandlerConfig{
 		HTTPClient:  client,
 		ConsumerKey: testConsumerKey,
 		Success:     SuccessHandlerFunc(errorOnSuccess(t)),
-		Failure:     DefaultErrorHandler,
+		Failure:     gologin.DefaultErrorHandler,
 	}
-	ts := httptest.NewServer(NewWebHandler(handlerConfig))
+	ts := httptest.NewServer(NewLoginHandler(handlerConfig))
 	// POST OAuth Echo data
-	resp, _ := http.PostForm(ts.URL, url.Values{"accountEndpoint": {testAccountEndpoint}, "accountRequestHeader": {testAccountRequestHeader}})
-	assertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
-}
-
-// success and failure handlers for testing
-
-func successChecks(t *testing.T) func(w http.ResponseWriter, req *http.Request, account *digits.Account) {
-	success := func(w http.ResponseWriter, req *http.Request, account *digits.Account) {
-		if account.AccessToken.Token != "t" {
-			t.Errorf("expected Token value t, got %q", account.AccessToken.Token)
-		}
-		if account.AccessToken.Secret != "s" {
-			t.Errorf("expected Secret value s, got %q", account.AccessToken.Secret)
-		}
-		if account.PhoneNumber != "0123456789" {
-			t.Errorf("expected PhoneNumber 0123456789, got %q", account.PhoneNumber)
-		}
-	}
-	return success
-}
-
-func errorOnSuccess(t *testing.T) func(w http.ResponseWriter, req *http.Request, account *digits.Account) {
-	success := func(w http.ResponseWriter, req *http.Request, account *digits.Account) {
-		t.Errorf("unexpected call to success, %v", account)
-	}
-	return success
-}
-
-func errorOnFailure(t *testing.T) func(w http.ResponseWriter, err error, code int) {
-	failure := func(w http.ResponseWriter, err error, code int) {
-		t.Errorf("unexpected call to failure, %v %d", err, code)
-	}
-	return failure
+	resp, _ := http.PostForm(ts.URL, url.Values{accountEndpointField: {testAccountEndpoint}, accountRequestHeaderField: {testAccountRequestHeader}})
+	logintest.AssertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
 }

@@ -13,7 +13,7 @@ const (
 	accessTokenSecretField = "twitterTokenSecret"
 )
 
-// TokenHandler errors.
+// Errors for missing token or token secret form fields.
 var (
 	ErrMissingToken       = fmt.Errorf("twitter: missing token field %s", accessTokenField)
 	ErrMissingTokenSecret = fmt.Errorf("twitter: missing token field %s", accessTokenSecretField)
@@ -89,11 +89,11 @@ func (h *TokenHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // validateToken returns an error if the token or token secret is missing.
-func validateToken(token, secret string) error {
+func validateToken(token, tokenSecret string) error {
 	if token == "" {
 		return ErrMissingToken
 	}
-	if secret == "" {
+	if tokenSecret == "" {
 		return ErrMissingTokenSecret
 	}
 	return nil

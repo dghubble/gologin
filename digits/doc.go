@@ -1,5 +1,5 @@
 /*
-Package login provides a WebHandler for implementing Digits phone number login.
+Package digits provides a WebHandler for implementing Digits phone number login.
 
 Package login provides a Digits WebHandler which receives POSTed OAuth Echo
 headers, validates them, and fetches the Digits Account. Handling is delegated
@@ -44,4 +44,4 @@ your backend supports.
   }
 
 */
-package login
+package digits

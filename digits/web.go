@@ -1,4 +1,4 @@
-package login
+package digits
 
 import (
 	"errors"
@@ -8,68 +8,73 @@ import (
 	"strings"
 
 	"github.com/dghubble/go-digits/digits"
+	"github.com/dghubble/gologin"
 	"github.com/dghubble/sling"
 )
 
 const (
-	accountEndpointKey      = "accountEndpoint"
-	accountRequestHeaderKey = "accountRequestHeader"
+	accountEndpointField      = "accountEndpoint"
+	accountRequestHeaderField = "accountRequestHeader"
 )
 
 // Errors for missing echo data, invalid data, and errors gettting Digits
 // accounts.
 var (
-	ErrMissingAccountEndpoint      = fmt.Errorf("digits: missing OAuth Echo form field %s", accountEndpointKey)
-	ErrMissingAccountRequestHeader = fmt.Errorf("digits: missing OAuth Echo form field %s", accountRequestHeaderKey)
+	ErrMissingAccountEndpoint      = fmt.Errorf("digits: missing OAuth Echo form field %s", accountEndpointField)
+	ErrMissingAccountRequestHeader = fmt.Errorf("digits: missing OAuth Echo form field %s", accountRequestHeaderField)
 	ErrInvalidDigitsEndpoint       = errors.New("digits: invalid Digits endpoint")
 	ErrInvalidConsumerKey          = errors.New("digits: incorrect OAuth Echo Auth Header Consumer Key")
-	ErrUnableToGetDigitsAccount    = errors.New("digits: unable to get Digits account")
 	consumerKeyRegexp              = regexp.MustCompile("oauth_consumer_key=\"(.*?)\"")
 )
 
-// WebHandlerConfig configures a WebHandler.
-type WebHandlerConfig struct {
+// LoginHandlerConfig configures a LoginHandler.
+type LoginHandlerConfig struct {
 	ConsumerKey string
 	HTTPClient  *http.Client
 	Success     SuccessHandler
-	Failure     ErrorHandler
+	Failure     gologin.ErrorHandler
 }
 
-// WebHandler receives POSTed Web OAuth Echo headers, validates them, and
-// fetches the Digits Account. If successful, handling is delegated to the
-// SuccessHandler. Otherwise, the ErrorHandler is called.
-type WebHandler struct {
+// LoginHandler handles Digits OAuth1 Echo login requests. If echo data
+// validates and authentication succeeds, handling is delegated to a
+// SuccessHandler which is provided with the Digits Account. Otherwise, an
+// ErrorHandler handles responding.
+type LoginHandler struct {
 	consumerKey string
 	httpClient  *http.Client
 	success     SuccessHandler
-	failure     ErrorHandler
+	failure     gologin.ErrorHandler
 }
 
-// NewWebHandler returns a new WebHandler.
-func NewWebHandler(config *WebHandlerConfig) *WebHandler {
+// NewLoginHandler returns a new LoginHandler.
+func NewLoginHandler(config *LoginHandlerConfig) *LoginHandler {
 	httpClient := config.HTTPClient
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
-	return &WebHandler{
+	failure := config.Failure
+	if failure == nil {
+		failure = gologin.DefaultErrorHandler
+	}
+	return &LoginHandler{
 		consumerKey: config.ConsumerKey,
 		httpClient:  httpClient,
 		success:     config.Success,
-		failure:     config.Failure,
+		failure:     failure,
 	}
 }
 
-// ServeHTTP receives POSTed Web OAuth Echo headers, validates them, and
+// ServeHTTP receives POSTed Digits OAuth Echo headers, validates them, and
 // fetches the Digits Account. If successful, handling is delegated to the
 // SuccessHandler. Otherwise, the ErrorHandler is called.
-func (h *WebHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if req.Method != "POST" {
 		h.failure.ServeHTTP(w, nil, http.StatusMethodNotAllowed)
 		return
 	}
 	req.ParseForm()
-	accountEndpoint := req.PostForm.Get(accountEndpointKey)
-	accountRequestHeader := req.PostForm.Get(accountRequestHeaderKey)
+	accountEndpoint := req.PostForm.Get(accountEndpointField)
+	accountRequestHeader := req.PostForm.Get(accountRequestHeaderField)
 	// validate POST'ed Digits OAuth Echo data
 	err := validateEcho(accountEndpoint, accountRequestHeader, h.consumerKey)
 	if err != nil {
@@ -79,7 +84,7 @@ func (h *WebHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// fetch Digits Account
 	account, resp, err := requestAccount(h.httpClient, accountEndpoint, accountRequestHeader)
 	// validate the Digits Account
-	err = validateAccountResponse(account, resp, err)
+	err = validateResponse(account, resp, err)
 	if err != nil {
 		h.failure.ServeHTTP(w, err, http.StatusBadRequest)
 		return
@@ -120,60 +125,4 @@ func validateEcho(accountEndpoint, accountRequestHeader, consumerKey string) err
 		return ErrInvalidConsumerKey
 	}
 	return nil
-}
-
-// validateAccountResponse returns an error if the given Digits Account, raw
-// http.Response, or error from Digits are unexpected. Returns nil if the
-// account response is valid.
-func validateAccountResponse(account *digits.Account, resp *http.Response, err error) error {
-	if err != nil || resp.StatusCode != http.StatusOK || account == nil {
-		return ErrUnableToGetDigitsAccount
-	}
-	if token := account.AccessToken; token.Token == "" || token.Secret == "" {
-		// JSON deserialized Digits account is missing fields
-		return ErrUnableToGetDigitsAccount
-	}
-	return nil
-}
-
-// SuccessHandler is called when authentication via Digits succeeds.
-type SuccessHandler interface {
-	ServeHTTP(w http.ResponseWriter, req *http.Request, account *digits.Account)
-}
-
-// ErrorHandler is called when authentication via Digits fails.
-type ErrorHandler interface {
-	ServeHTTP(w http.ResponseWriter, err error, code int)
-}
-
-// DefaultErrorHandler responds to requests by passing through the error
-// message and code from the login library.
-var DefaultErrorHandler = &passthroughErrorHandler{}
-
-type passthroughErrorHandler struct{}
-
-func (e passthroughErrorHandler) ServeHTTP(w http.ResponseWriter, err error, code int) {
-	if err != nil {
-		http.Error(w, err.Error(), code)
-		return
-	}
-	http.Error(w, "", code)
-}
-
-// HandlerFunc adapters
-
-// SuccessHandlerFunc is an adapter to allow an ordinary function to be used as
-// a SuccessHandler.
-type SuccessHandlerFunc func(w http.ResponseWriter, req *http.Request, account *digits.Account)
-
-func (f SuccessHandlerFunc) ServeHTTP(w http.ResponseWriter, req *http.Request, account *digits.Account) {
-	f(w, req, account)
-}
-
-// ErrorHandlerFunc is an adapter to allow an ordinary function to be used as
-// an ErrorHandlerFunc.
-type ErrorHandlerFunc func(w http.ResponseWriter, err error, code int)
-
-func (f ErrorHandlerFunc) ServeHTTP(w http.ResponseWriter, err error, code int) {
-	f(w, err, code)
 }

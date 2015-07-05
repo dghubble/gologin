@@ -1,22 +1,22 @@
-// Package login handles Digits token based logins, typically for mobile clients.
-package login
+package digits
 
 import (
 	"fmt"
 	"net/http"
 
 	"github.com/dghubble/go-digits/digits"
+	"github.com/dghubble/gologin"
 )
 
 const (
-	accessTokenKey       = "digitsToken"
-	accessTokenSecretKey = "digitsTokenSecret"
+	accessTokenField       = "digitsToken"
+	accessTokenSecretField = "digitsTokenSecret"
 )
 
 // Errors for missing token or token secret form fields.
 var (
-	ErrMissingToken       = fmt.Errorf("digits: missing Token form field %s", accessTokenKey)
-	ErrMissingTokenSecret = fmt.Errorf("digits: missing Token Secret form field %s", accessTokenSecretKey)
+	ErrMissingToken       = fmt.Errorf("digits: missing Token form field %s", accessTokenField)
+	ErrMissingTokenSecret = fmt.Errorf("digits: missing Token Secret form field %s", accessTokenSecretField)
 )
 
 // AuthClientSource is an interface for sources of oauth1 token authorized
@@ -28,31 +28,35 @@ type AuthClientSource interface {
 
 // TokenHandlerConfig configures a TokenHandler.
 type TokenHandlerConfig struct {
-	AuthConfig AuthClientSource
-	Success    SuccessHandler
-	Failure    ErrorHandler
+	OAuth1Config AuthClientSource
+	Success      SuccessHandler
+	Failure      gologin.ErrorHandler
 }
 
-// TokenHandler receives a POSTed Digits token/secret and fetches the Digits
-// Account. If successful, handling is delegated to the SuccessHandler.
+// TokenHandler receives a POSTed Digits token/secret and verifies the Digits
+// credentials. If successful, handling is delegated to the SuccessHandler.
 // Otherwise, the ErrorHandler is called.
 type TokenHandler struct {
-	authConfig AuthClientSource
-	success    SuccessHandler
-	failure    ErrorHandler
+	oauth1Config AuthClientSource
+	success      SuccessHandler
+	failure      gologin.ErrorHandler
 }
 
 // NewTokenHandler returns a new TokenHandler.
 func NewTokenHandler(config *TokenHandlerConfig) *TokenHandler {
+	failure := config.Failure
+	if failure == nil {
+		failure = gologin.DefaultErrorHandler
+	}
 	return &TokenHandler{
-		authConfig: config.AuthConfig,
-		success:    config.Success,
-		failure:    config.Failure,
+		oauth1Config: config.OAuth1Config,
+		success:      config.Success,
+		failure:      failure,
 	}
 }
 
-// ServeHTTP receives a POSTed Digits token/secret and fetches the Digits
-// Account. If successful, handling is delegated to the SuccessHandler.
+// ServeHTTP receives a POSTed Digits token/secret and verifies the Digits
+// credentials. If successful, handling is delegated to the SuccessHandler.
 // Otherwise, the ErrorHandler is called.
 func (h *TokenHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if req.Method != "POST" {
@@ -60,19 +64,18 @@ func (h *TokenHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	req.ParseForm()
-	accessToken := req.PostForm.Get(accessTokenKey)
-	accessTokenSecret := req.PostForm.Get(accessTokenSecretKey)
+	accessToken := req.PostForm.Get(accessTokenField)
+	accessTokenSecret := req.PostForm.Get(accessTokenSecretField)
 	err := validateToken(accessToken, accessTokenSecret)
 	if err != nil {
 		h.failure.ServeHTTP(w, err, http.StatusBadRequest)
 		return
 	}
-	httpClient := h.authConfig.GetClient(accessToken, accessTokenSecret)
+	// verify/lookup the Digits Account
+	httpClient := h.oauth1Config.GetClient(accessToken, accessTokenSecret)
 	digitsClient := digits.NewClient(httpClient)
-
-	// fetch Digits Account
 	account, resp, err := digitsClient.Accounts.Account()
-	err = validateAccountResponse(account, resp, err)
+	err = validateResponse(account, resp, err)
 	if err != nil {
 		h.failure.ServeHTTP(w, err, http.StatusBadRequest)
 		return
@@ -81,11 +84,11 @@ func (h *TokenHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // validateToken returns an error if the token or token secret is missing.
-func validateToken(accessToken, accessTokenSecret string) error {
-	if accessToken == "" {
+func validateToken(token, tokenSecret string) error {
+	if token == "" {
 		return ErrMissingToken
 	}
-	if accessTokenSecret == "" {
+	if tokenSecret == "" {
 		return ErrMissingTokenSecret
 	}
 	return nil

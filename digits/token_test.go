@@ -1,10 +1,13 @@
-package login
+package digits
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
+
+	"github.com/dghubble/gologin"
+	"github.com/dghubble/gologin/logintest"
 )
 
 const (
@@ -29,18 +32,18 @@ func TestValidateToken_missingTokenSecret(t *testing.T) {
 func TestTokenHandler_successEndToEnd(t *testing.T) {
 	proxyClient, _, server := newDigitsTestServer(testAccountJSON)
 	defer server.Close()
-	proxyClientSource := newStubClientSource(proxyClient)
+	proxyClientSource := logintest.NewStubClientSource(proxyClient)
 
 	handlerConfig := &TokenHandlerConfig{
-		// returns an http.Client which proxies requests to the digits test server
-		AuthConfig: proxyClientSource,
-		Success:    SuccessHandlerFunc(successChecks(t)),
-		Failure:    ErrorHandlerFunc(errorOnFailure(t)),
+		// returns an http.Client which proxies requests to the Digits test server
+		OAuth1Config: proxyClientSource,
+		Success:      SuccessHandlerFunc(successChecks(t)),
+		Failure:      gologin.ErrorHandlerFunc(logintest.ErrorOnFailure(t)),
 	}
 	// server under test
 	ts := httptest.NewServer(NewTokenHandler(handlerConfig))
 	// POST Digits access token
-	resp, err := http.PostForm(ts.URL, url.Values{"digitsToken": {testDigitsToken}, "digitsTokenSecret": {testDigitsTokenSecret}})
+	resp, err := http.PostForm(ts.URL, url.Values{accessTokenField: {testDigitsToken}, accessTokenSecretField: {testDigitsTokenSecret}})
 	if err != nil {
 		t.Errorf("unexpected error %v", err)
 	}
@@ -52,12 +55,12 @@ func TestTokenHandler_successEndToEnd(t *testing.T) {
 func TestTokenHandler_wrongMethod(t *testing.T) {
 	proxyClient, _, server := newDigitsTestServer(testAccountJSON)
 	defer server.Close()
-	proxyClientSource := newStubClientSource(proxyClient)
+	proxyClientSource := logintest.NewStubClientSource(proxyClient)
 
 	handlerConfig := &TokenHandlerConfig{
-		AuthConfig: proxyClientSource,
-		Success:    SuccessHandlerFunc(errorOnSuccess(t)),
-		Failure:    DefaultErrorHandler,
+		OAuth1Config: proxyClientSource,
+		Success:      SuccessHandlerFunc(errorOnSuccess(t)),
+		Failure:      gologin.DefaultErrorHandler,
 	}
 	ts := httptest.NewServer(NewTokenHandler(handlerConfig))
 	resp, _ := http.Get(ts.URL)
@@ -66,70 +69,54 @@ func TestTokenHandler_wrongMethod(t *testing.T) {
 	}
 }
 
-func TestTokenHandler_invalidPOSTArguments(t *testing.T) {
+func TestTokenHandler_invalidPOSTFields(t *testing.T) {
 	proxyClient, _, server := newDigitsTestServer(testAccountJSON)
 	defer server.Close()
-	proxyClientSource := newStubClientSource(proxyClient)
+	proxyClientSource := logintest.NewStubClientSource(proxyClient)
 
 	handlerConfig := &TokenHandlerConfig{
-		AuthConfig: proxyClientSource,
-		Success:    SuccessHandlerFunc(errorOnSuccess(t)),
-		Failure:    DefaultErrorHandler,
+		OAuth1Config: proxyClientSource,
+		Success:      SuccessHandlerFunc(errorOnSuccess(t)),
+		Failure:      gologin.DefaultErrorHandler,
 	}
 	ts := httptest.NewServer(NewTokenHandler(handlerConfig))
 	// POST Digits access Token
-	resp, _ := http.PostForm(ts.URL, url.Values{"wrongFieldName": {testDigitsToken}, "digitsTokenSecret": {testDigitsTokenSecret}})
-	assertBodyString(t, resp.Body, ErrMissingToken.Error()+"\n")
-	resp, _ = http.PostForm(ts.URL, url.Values{"digitsToken": {testDigitsToken}, "wrongFieldName": {testDigitsTokenSecret}})
-	assertBodyString(t, resp.Body, ErrMissingTokenSecret.Error()+"\n")
+	resp, _ := http.PostForm(ts.URL, url.Values{"wrongFieldName": {testDigitsToken}, accessTokenSecretField: {testDigitsTokenSecret}})
+	logintest.AssertBodyString(t, resp.Body, ErrMissingToken.Error()+"\n")
+	resp, _ = http.PostForm(ts.URL, url.Values{accessTokenField: {testDigitsToken}, "wrongFieldName": {testDigitsTokenSecret}})
+	logintest.AssertBodyString(t, resp.Body, ErrMissingTokenSecret.Error()+"\n")
 }
 
 func TestTokenHandler_unauthorized(t *testing.T) {
-	proxyClient, _, server := newRejectingTestServer()
+	proxyClient, server := logintest.UnauthorizedTestServer()
 	defer server.Close()
-	proxyClientSource := newStubClientSource(proxyClient)
+	proxyClientSource := logintest.NewStubClientSource(proxyClient)
 
 	handlerConfig := &TokenHandlerConfig{
-		AuthConfig: proxyClientSource,
-		Success:    SuccessHandlerFunc(errorOnSuccess(t)),
-		Failure:    DefaultErrorHandler,
+		OAuth1Config: proxyClientSource,
+		Success:      SuccessHandlerFunc(errorOnSuccess(t)),
+		Failure:      gologin.DefaultErrorHandler,
 	}
 	ts := httptest.NewServer(NewTokenHandler(handlerConfig))
 	// POST Digits access Token
-	resp, _ := http.PostForm(ts.URL, url.Values{"digitsToken": {testDigitsToken}, "digitsTokenSecret": {testDigitsTokenSecret}})
-	assertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
+	resp, _ := http.PostForm(ts.URL, url.Values{accessTokenField: {testDigitsToken}, accessTokenSecretField: {testDigitsTokenSecret}})
+	logintest.AssertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
 }
 
 func TestTokenHandler_digitsAPIDown(t *testing.T) {
-	client, _, server := testServer()
+	client, _, server := logintest.TestServer()
 	defer server.Close()
 	// source returns client to a NoOp server
-	proxyClientSource := newStubClientSource(client)
+	proxyClientSource := logintest.NewStubClientSource(client)
 
 	handlerConfig := &TokenHandlerConfig{
-		AuthConfig: proxyClientSource,
-		Success:    SuccessHandlerFunc(errorOnSuccess(t)),
-		Failure:    DefaultErrorHandler,
+		OAuth1Config: proxyClientSource,
+		Success:      SuccessHandlerFunc(errorOnSuccess(t)),
+		Failure:      gologin.DefaultErrorHandler,
 	}
 	ts := httptest.NewServer(NewTokenHandler(handlerConfig))
 
 	// POST Digits Access Token
-	resp, _ := http.PostForm(ts.URL, url.Values{"digitsToken": {testDigitsToken}, "digitsTokenSecret": {testDigitsTokenSecret}})
-	assertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
-}
-
-type stubClientSource struct {
-	client *http.Client
-}
-
-// newStubClientSource returns a stubClientSource which always returns the
-// given http client.
-func newStubClientSource(client *http.Client) *stubClientSource {
-	return &stubClientSource{
-		client: client,
-	}
-}
-
-func (s *stubClientSource) GetClient(token, tokenSecret string) *http.Client {
-	return s.client
+	resp, _ := http.PostForm(ts.URL, url.Values{accessTokenField: {testDigitsToken}, accessTokenSecretField: {testDigitsTokenSecret}})
+	logintest.AssertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
 }

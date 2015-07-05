@@ -14,14 +14,13 @@ func TestTokenHandler_successEndToEnd(t *testing.T) {
 	proxyClient, _, server := newTwitterTestServer(testTwitterUserJSON)
 	defer server.Close()
 	// returns an http.Client which proxies requests to Twitter test server
-	proxyClientSource := newStubClientSource(proxyClient)
+	proxyClientSource := logintest.NewStubClientSource(proxyClient)
 
 	handlerConfig := &TokenHandlerConfig{
 		OAuth1Config: proxyClientSource,
 		Success:      SuccessHandlerFunc(successChecks(t)),
 		Failure:      gologin.ErrorHandlerFunc(logintest.ErrorOnFailure(t)),
 	}
-	// server under test, which uses go-login/twitter TokenHandler
 	ts := httptest.NewServer(NewTokenHandler(handlerConfig))
 	// POST token to server under test
 	resp, err := http.PostForm(ts.URL, url.Values{accessTokenField: {testTwitterToken}, accessTokenSecretField: {testTwitterTokenSecret}})
@@ -36,7 +35,7 @@ func TestTokenHandler_successEndToEnd(t *testing.T) {
 func TestTokenHandler_wrongMethod(t *testing.T) {
 	proxyClient, _, server := newTwitterTestServer(testTwitterUserJSON)
 	defer server.Close()
-	proxyClientSource := newStubClientSource(proxyClient)
+	proxyClientSource := logintest.NewStubClientSource(proxyClient)
 
 	handlerConfig := &TokenHandlerConfig{
 		OAuth1Config: proxyClientSource,
@@ -50,10 +49,10 @@ func TestTokenHandler_wrongMethod(t *testing.T) {
 	}
 }
 
-func TestTokenHandler_invalidPOSTField(t *testing.T) {
+func TestTokenHandler_invalidPOSTFields(t *testing.T) {
 	proxyClient, _, server := newTwitterTestServer(testTwitterUserJSON)
 	defer server.Close()
-	proxyClientSource := newStubClientSource(proxyClient)
+	proxyClientSource := logintest.NewStubClientSource(proxyClient)
 
 	handlerConfig := &TokenHandlerConfig{
 		OAuth1Config: proxyClientSource,
@@ -71,9 +70,9 @@ func TestTokenHandler_invalidPOSTField(t *testing.T) {
 }
 
 func TestTokenHandler_unauthorized(t *testing.T) {
-	proxyClient, _, server := newRejectingTestServer()
+	proxyClient, server := logintest.UnauthorizedTestServer()
 	defer server.Close()
-	proxyClientSource := newStubClientSource(proxyClient)
+	proxyClientSource := logintest.NewStubClientSource(proxyClient)
 
 	handlerConfig := &TokenHandlerConfig{
 		OAuth1Config: proxyClientSource,
@@ -89,7 +88,7 @@ func TestTokenHandler_whenValidationServerDown(t *testing.T) {
 	client, _, server := logintest.TestServer()
 	defer server.Close()
 	// source returns client to a NoOp server
-	proxyClientSource := newStubClientSource(client)
+	proxyClientSource := logintest.NewStubClientSource(client)
 
 	handlerConfig := &TokenHandlerConfig{
 		OAuth1Config: proxyClientSource,
@@ -99,20 +98,4 @@ func TestTokenHandler_whenValidationServerDown(t *testing.T) {
 	ts := httptest.NewServer(NewTokenHandler(handlerConfig))
 	resp, _ := http.PostForm(ts.URL, url.Values{accessTokenField: {testTwitterToken}, accessTokenSecretField: {testTwitterTokenSecret}})
 	logintest.AssertBodyString(t, resp.Body, ErrUnableToGetTwitterUser.Error()+"\n")
-}
-
-type stubClientSource struct {
-	client *http.Client
-}
-
-// newStubClientSource returns a stubClientSource which always returns the
-// given http client.
-func newStubClientSource(client *http.Client) *stubClientSource {
-	return &stubClientSource{
-		client: client,
-	}
-}
-
-func (s *stubClientSource) GetClient(token, tokenSecret string) *http.Client {
-	return s.client
 }

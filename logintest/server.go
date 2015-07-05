@@ -1,21 +1,10 @@
 package logintest
 
 import (
-	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"testing"
 )
-
-// ErrorOnFailure is an ErrorHandler which asserts that it is not called.
-func ErrorOnFailure(t *testing.T) func(w http.ResponseWriter, err error, code int) {
-	failure := func(w http.ResponseWriter, err error, code int) {
-		t.Errorf("unexpected call to failure, %v %d", err, code)
-	}
-	return failure
-}
 
 // TestServer returns an http Client, ServeMux, and Server. The client proxies
 // requests to the server and handlers can be registered on the mux to handle
@@ -32,6 +21,17 @@ func TestServer() (*http.Client, *http.ServeMux, *httptest.Server) {
 	return client, mux, server
 }
 
+// UnauthorizedTestServer returns a http.Server which always returns a 401
+// Unauthorized response and a client which proxies to it. The caller must
+// close the test server.
+func UnauthorizedTestServer() (*http.Client, *httptest.Server) {
+	client, mux, server := TestServer()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(401)
+	})
+	return client, server
+}
+
 // RewriteTransport rewrites https requests to http to avoid TLS cert issues
 // during testing.
 type RewriteTransport struct {
@@ -46,16 +46,4 @@ func (t *RewriteTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 		return http.DefaultTransport.RoundTrip(req)
 	}
 	return t.Transport.RoundTrip(req)
-}
-
-// AssertBodyString asserts that a Request Body matches the expected string.
-func AssertBodyString(t *testing.T, rc io.ReadCloser, expected string) {
-	defer rc.Close()
-	if b, err := ioutil.ReadAll(rc); err == nil {
-		if string(b) != expected {
-			t.Errorf("expected %q, got %q", expected, string(b))
-		}
-	} else {
-		t.Errorf("error reading Body")
-	}
 }
