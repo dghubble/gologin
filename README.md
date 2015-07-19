@@ -1,15 +1,19 @@
 
-# gologin
+# gologin [![Build Status](https://travis-ci.org/dghubble/gologin.png)](https://travis-ci.org/dghubble/gologin) [![GoDoc](http://godoc.org/github.com/dghubble/gologin?status.png)](http://godoc.org/github.com/dghubble/gologin)
 
-gologin handles the boilerplate of 3rd party login by providing login and callback handlers for 3-legged OAuth and token-based login (for mobile).
+gologin provides boilerplate `http.Handler`s (3-legged OAuth, token login) for popular 3rd party login providers (3-legged OAuth, mobile token login).
 
 ## Status
 
-Quite Alpha
+Alpha
 
 ### Features
 
-Web Login handlers for:
+* Register a `LoginHandler` to handle web login and OAuth callbacks.
+* Register a `TokenHandler` to handle mobile token logins.
+* Works with any session library, web token library, and context library.
+
+Login handlers for:
 
 * Twitter
 * Digits (Phone SMS)
@@ -17,9 +21,32 @@ Web Login handlers for:
 * OAuth1
 * OAuth2
 
-Token login handlers for:
+Token handlers for:
 
 * Twitter
 * Digits
+
+## Install
+
+    go get github.com/dghubble/gologin
+
+## Docs
+
+Read [GoDoc](https://godoc.org/github.com/dghubble/gologin)
+
+## Roadmap
+
+* Improve test coverage and argument checks.
+* Abstract the dependency on an OAuth1 implementation.
+* Google
+* Improve examples and documentation
+* Soundcloud
+* Tumblr
+* Dropbox
+* Bitbucket
+
+## License
+
+[MIT License](LICENSE)
 
 
