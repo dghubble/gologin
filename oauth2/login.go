@@ -10,11 +10,15 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// TODO: CSRF protection, currently does not obey spec
+// Errors which may occur on login.
+var (
+	ErrInvalidState = errors.New("gologin: Invalid OAuth2 state parameter")
+)
 
 // Config configures a LoginHandler.
 type Config struct {
 	OAuth2Config *oauth2.Config
+	StateSource  StateSource
 	Success      SuccessHandler
 	Failure      gologin.ErrorHandler
 }
@@ -25,6 +29,7 @@ type Config struct {
 type LoginHandler struct {
 	mux          *http.ServeMux
 	oauth2Config *oauth2.Config
+	stateSource  StateSource
 	success      SuccessHandler
 	failure      gologin.ErrorHandler
 }
@@ -39,6 +44,7 @@ func NewLoginHandler(config *Config) *LoginHandler {
 	loginHandler := &LoginHandler{
 		mux:          mux,
 		oauth2Config: config.OAuth2Config,
+		stateSource:  config.StateSource,
 		success:      config.Success,
 		failure:      failure,
 	}
@@ -55,7 +61,7 @@ func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // authorization URL.
 func (h *LoginHandler) RequestLoginHandler() http.Handler {
 	fn := func(w http.ResponseWriter, req *http.Request) {
-		authorizationURL := h.oauth2Config.AuthCodeURL("vulnerable to csrf!")
+		authorizationURL := h.oauth2Config.AuthCodeURL(h.stateSource.State())
 		http.Redirect(w, req, authorizationURL, http.StatusFound)
 	}
 	return http.HandlerFunc(fn)
@@ -65,10 +71,13 @@ func (h *LoginHandler) RequestLoginHandler() http.Handler {
 // and state and obtaining an access token.
 func (h *LoginHandler) CallbackHandler() http.Handler {
 	fn := func(w http.ResponseWriter, req *http.Request) {
-		authCode, _, err := validateCallback(req)
-		// TODO: verify the state! Vulnerable to CSRF
+		authCode, state, err := validateCallback(req)
 		if err != nil {
 			h.failure.ServeHTTP(w, err, http.StatusBadRequest)
+			return
+		}
+		if state != h.stateSource.State() {
+			h.failure.ServeHTTP(w, ErrInvalidState, http.StatusBadRequest)
 			return
 		}
 		// use the authorization code to get an access token

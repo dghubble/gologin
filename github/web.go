@@ -12,6 +12,7 @@ import (
 // LoginHandlerConfig configures a LoginHandler.
 type LoginHandlerConfig struct {
 	OAuth2Config *oauth2.Config
+	StateSource  oauth2Login.StateSource
 	Success      SuccessHandler
 	Failure      gologin.ErrorHandler
 }
@@ -35,6 +36,7 @@ func NewLoginHandler(config *LoginHandlerConfig) http.Handler {
 	}
 	return oauth2Login.NewLoginHandler(&oauth2Login.Config{
 		OAuth2Config: config.OAuth2Config,
+		StateSource:  config.StateSource,
 		Success:      oauth2Login.SuccessHandlerFunc(handler.successWithUser),
 		Failure:      config.Failure,
 	})
