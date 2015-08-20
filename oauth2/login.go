@@ -48,8 +48,8 @@ func NewLoginHandler(config *Config) *LoginHandler {
 		success:      config.Success,
 		failure:      failure,
 	}
-	mux.Handle("/login", loginHandler.RequestLoginHandler())
-	mux.Handle("/callback", loginHandler.CallbackHandler())
+	mux.Handle("/login", RequestLoginHandler(config.OAuth2Config, config.StateSource))
+	mux.Handle("/callback", CallbackHandler(config.OAuth2Config, config.StateSource, config.Success, config.Failure))
 	return loginHandler
 }
 
@@ -59,9 +59,9 @@ func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // RequestLoginHandler handles OAuth2 login requests by redirecting to the
 // authorization URL.
-func (h *LoginHandler) RequestLoginHandler() http.Handler {
+func RequestLoginHandler(config *oauth2.Config, stater StateSource) http.Handler {
 	fn := func(w http.ResponseWriter, req *http.Request) {
-		authorizationURL := h.oauth2Config.AuthCodeURL(h.stateSource.State())
+		authorizationURL := config.AuthCodeURL(stater.State())
 		http.Redirect(w, req, authorizationURL, http.StatusFound)
 	}
 	return http.HandlerFunc(fn)
@@ -69,24 +69,24 @@ func (h *LoginHandler) RequestLoginHandler() http.Handler {
 
 // CallbackHandler handles OAuth2 callback requests by reading the auth code
 // and state and obtaining an access token.
-func (h *LoginHandler) CallbackHandler() http.Handler {
+func CallbackHandler(config *oauth2.Config, stater StateSource, success SuccessHandler, failure gologin.ErrorHandler) http.Handler {
 	fn := func(w http.ResponseWriter, req *http.Request) {
 		authCode, state, err := validateCallback(req)
 		if err != nil {
-			h.failure.ServeHTTP(w, err, http.StatusBadRequest)
+			failure.ServeHTTP(w, err, http.StatusBadRequest)
 			return
 		}
-		if state != h.stateSource.State() {
-			h.failure.ServeHTTP(w, ErrInvalidState, http.StatusBadRequest)
+		if state != stater.State() {
+			failure.ServeHTTP(w, ErrInvalidState, http.StatusBadRequest)
 			return
 		}
 		// use the authorization code to get an access token
-		token, err := h.oauth2Config.Exchange(oauth2.NoContext, authCode)
+		token, err := config.Exchange(oauth2.NoContext, authCode)
 		if err != nil {
-			h.failure.ServeHTTP(w, err, http.StatusBadRequest)
+			failure.ServeHTTP(w, err, http.StatusBadRequest)
 			return
 		}
-		h.success.ServeHTTP(w, req, token.AccessToken)
+		success.ServeHTTP(w, req, token.AccessToken)
 	}
 	return http.HandlerFunc(fn)
 }
