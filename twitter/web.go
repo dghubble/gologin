@@ -44,7 +44,7 @@ func NewLoginHandler(config *LoginHandlerConfig) http.Handler {
 // and failure handlers. It verifies token credentials to obtain the Twitter
 // User object for inclusion in data passed on success.
 func (h *LoginHandler) successWithUser(w http.ResponseWriter, req *http.Request, token, tokenSecret string) {
-	httpClient := h.oauth1Config.GetClient(token, tokenSecret)
+	httpClient := h.oauth1Config.Client(oauth1.NewToken(token, tokenSecret))
 	twitterClient := twitter.NewClient(httpClient)
 	accountVerifyParams := &twitter.AccountVerifyParams{
 		IncludeEntities: twitter.Bool(false),

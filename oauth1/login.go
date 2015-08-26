@@ -55,7 +55,7 @@ func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // token and redirecting to the authorization URL.
 func (h *LoginHandler) RequestLoginHandler() http.Handler {
 	fn := func(w http.ResponseWriter, req *http.Request) {
-		requestToken, err := h.oauth1Config.GetRequestToken()
+		requestToken, _, err := h.oauth1Config.RequestToken()
 		if err != nil {
 			h.failure.ServeHTTP(w, err, http.StatusBadRequest)
 			return
@@ -75,16 +75,19 @@ func (h *LoginHandler) RequestLoginHandler() http.Handler {
 // verifier and obtaining an access token.
 func (h *LoginHandler) CallbackHandler() http.Handler {
 	fn := func(w http.ResponseWriter, req *http.Request) {
-		tokenKey, verifier, _ := h.oauth1Config.HandleAuthorizationCallback(req)
-		// Twitter AccessToken endpoint does not require the auth header to be signed
-		// No need to lookup the (temporary) RequestToken secret token.
-		requestToken := &oauth1.RequestToken{Token: tokenKey, TokenSecret: ""}
-		accessToken, err := h.oauth1Config.GetAccessToken(requestToken, verifier)
+		requestToken, verifier, err := oauth1.ParseAuthorizationCallback(req)
 		if err != nil {
 			h.failure.ServeHTTP(w, err, http.StatusBadRequest)
 			return
 		}
-		h.success.ServeHTTP(w, req, accessToken.Token, accessToken.TokenSecret)
+		// Twitter AccessToken endpoint does not require the auth header to be signed
+		// No need to lookup the (temporary) RequestToken secret token.
+		accessToken, accessSecret, err := h.oauth1Config.AccessToken(requestToken, "", verifier)
+		if err != nil {
+			h.failure.ServeHTTP(w, err, http.StatusBadRequest)
+			return
+		}
+		h.success.ServeHTTP(w, req, accessToken, accessSecret)
 	}
 	return http.HandlerFunc(fn)
 }
