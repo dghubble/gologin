@@ -15,51 +15,9 @@ var (
 	ErrInvalidState = errors.New("gologin: Invalid OAuth2 state parameter")
 )
 
-// Config configures a LoginHandler.
-type Config struct {
-	OAuth2Config *oauth2.Config
-	StateSource  StateSource
-	Success      SuccessHandler
-	Failure      gologin.ErrorHandler
-}
-
-// LoginHandler handles OAuth2 login and callback requests. If authentication
-// succeeds. handling is delegated to a SuccessHandler. Otherwise, an
-// ErrorHandler handles responding.
-type LoginHandler struct {
-	mux          *http.ServeMux
-	oauth2Config *oauth2.Config
-	stateSource  StateSource
-	success      SuccessHandler
-	failure      gologin.ErrorHandler
-}
-
-// NewLoginHandler returns a new LoginHandler.
-func NewLoginHandler(config *Config) *LoginHandler {
-	mux := http.NewServeMux()
-	failure := config.Failure
-	if failure == nil {
-		failure = gologin.DefaultErrorHandler
-	}
-	loginHandler := &LoginHandler{
-		mux:          mux,
-		oauth2Config: config.OAuth2Config,
-		stateSource:  config.StateSource,
-		success:      config.Success,
-		failure:      failure,
-	}
-	mux.Handle("/login", RequestLoginHandler(config.OAuth2Config, config.StateSource))
-	mux.Handle("/callback", CallbackHandler(config.OAuth2Config, config.StateSource, config.Success, config.Failure))
-	return loginHandler
-}
-
-func (h *LoginHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	h.mux.ServeHTTP(w, req)
-}
-
-// RequestLoginHandler handles OAuth2 login requests by redirecting to the
+// LoginHandler handles OAuth2 login requests by redirecting to the
 // authorization URL.
-func RequestLoginHandler(config *oauth2.Config, stater StateSource) http.Handler {
+func LoginHandler(config *oauth2.Config, stater StateSource) http.Handler {
 	fn := func(w http.ResponseWriter, req *http.Request) {
 		authorizationURL := config.AuthCodeURL(stater.State())
 		http.Redirect(w, req, authorizationURL, http.StatusFound)
@@ -70,6 +28,9 @@ func RequestLoginHandler(config *oauth2.Config, stater StateSource) http.Handler
 // CallbackHandler handles OAuth2 callback requests by reading the auth code
 // and state and obtaining an access token.
 func CallbackHandler(config *oauth2.Config, stater StateSource, success SuccessHandler, failure gologin.ErrorHandler) http.Handler {
+	if failure == nil {
+		failure = gologin.DefaultErrorHandler
+	}
 	fn := func(w http.ResponseWriter, req *http.Request) {
 		authCode, state, err := validateCallback(req)
 		if err != nil {
