@@ -1,12 +1,13 @@
-// Package oauth2 provides a LoginHandler for OAuth2 login and callback
-// requests.
+// Package oauth2 provides handlers for OAuth2 login and callback requests.
 package oauth2
 
 import (
 	"errors"
 	"net/http"
 
+	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
+	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
 
@@ -17,43 +18,48 @@ var (
 
 // LoginHandler handles OAuth2 login requests by redirecting to the
 // authorization URL.
-func LoginHandler(config *oauth2.Config, stater StateSource) http.Handler {
-	fn := func(w http.ResponseWriter, req *http.Request) {
+func LoginHandler(config *oauth2.Config, stater StateSource) ctxh.ContextHandler {
+	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		authorizationURL := config.AuthCodeURL(stater.State())
 		http.Redirect(w, req, authorizationURL, http.StatusFound)
 	}
-	return http.HandlerFunc(fn)
+	return ctxh.ContextHandlerFunc(fn)
 }
 
-// CallbackHandler handles OAuth2 callback requests by reading the auth code
-// and state and obtaining an access token.
-func CallbackHandler(config *oauth2.Config, stater StateSource, success SuccessHandler, failure gologin.ErrorHandler) http.Handler {
+// CallbackHandler handles OAuth2 callback requests by parsing the auth code
+// and state and requesting an access token.
+func CallbackHandler(config *oauth2.Config, stater StateSource, success ctxh.ContextHandler, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	if failure == nil {
-		failure = gologin.DefaultErrorHandler
+		failure = gologin.DefaultFailureHandler
 	}
-	fn := func(w http.ResponseWriter, req *http.Request) {
-		authCode, state, err := validateCallback(req)
+	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+		authCode, state, err := parseCallback(req)
 		if err != nil {
-			failure.ServeHTTP(w, err, http.StatusBadRequest)
+			ctx = gologin.WithError(ctx, err)
+			failure.ServeHTTP(ctx, w, req)
 			return
 		}
 		if state != stater.State() {
-			failure.ServeHTTP(w, ErrInvalidState, http.StatusBadRequest)
+			ctx = gologin.WithError(ctx, ErrInvalidState)
+			failure.ServeHTTP(ctx, w, req)
 			return
 		}
 		// use the authorization code to get an access token
-		token, err := config.Exchange(oauth2.NoContext, authCode)
+		token, err := config.Exchange(ctx, authCode)
 		if err != nil {
-			failure.ServeHTTP(w, err, http.StatusBadRequest)
+			ctx = gologin.WithError(ctx, err)
+			failure.ServeHTTP(ctx, w, req)
 			return
 		}
-		success.ServeHTTP(w, req, token.AccessToken)
+		ctx = WithAccessToken(ctx, token.AccessToken)
+		success.ServeHTTP(ctx, w, req)
 	}
-	return http.HandlerFunc(fn)
+	return ctxh.ContextHandlerFunc(fn)
 }
 
-func validateCallback(req *http.Request) (authCode, state string, err error) {
-	// parse the raw query from the URL into req.Form
+// parseCallback parses the "code" and "state" parameters from the http.Request
+// and returns them.
+func parseCallback(req *http.Request) (authCode, state string, err error) {
 	err = req.ParseForm()
 	if err != nil {
 		return "", "", err
