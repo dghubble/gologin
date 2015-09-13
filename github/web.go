@@ -11,23 +11,26 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// LoginHandler handles Github OAuth2 login requests by redirecting to the
+// LoginHandler handles Github login requests by redirecting to the
 // authorization URL.
 func LoginHandler(config *oauth2.Config, stater oauth2Login.StateSource) ctxh.ContextHandler {
 	return oauth2Login.LoginHandler(config, stater)
 }
 
-// CallbackHandler handles Github OAuth2 callback requests by parsing the auth
-// code and state and requesting an access token. If authentication succeeds,
-// handling delegates to the success handler, otherwise to the failure handler.
-func CallbackHandler(config *oauth2.Config, stater oauth2Login.StateSource, success ctxh.ContextHandler, failure ctxh.ContextHandler) ctxh.ContextHandler {
+// CallbackHandler handles Github callback requests by parsing the auth code
+// and state and adding the Github access token and User to the ctx. If
+// authentication succeeds, handling delegates to the success handler,
+// otherwise to the failure handler.
+func CallbackHandler(config *oauth2.Config, stater oauth2Login.StateSource, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+	success = IncludeUser(config, success, failure)
 	return oauth2Login.CallbackHandler(config, stater, success, failure)
 }
 
-// IncludeUser returns an oauth2 success handler which wraps the github
-// success and failure handlers. It verifies token credentials to obtain the
-// Github User object for inclusion in data passed on success.
-func IncludeUser(config *oauth2.Config, success ctxh.ContextHandler, failure ctxh.ContextHandler) ctxh.ContextHandler {
+// IncludeUser is a ContextHandler that gets the OAuth2 access token from the
+// ctx to get the corresponding Github User. If successful, the User is added
+// to the ctx and the success handler is called. Otherwise the failure handler
+// is called.
+func IncludeUser(config *oauth2.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}

@@ -27,7 +27,7 @@ func LoginHandler(config *oauth2.Config, stater StateSource) ctxh.ContextHandler
 }
 
 // CallbackHandler handles OAuth2 callback requests by parsing the auth code
-// and state and requesting an access token.
+// and state, then obtaining an access token.
 func CallbackHandler(config *oauth2.Config, stater StateSource, success ctxh.ContextHandler, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler

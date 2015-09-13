@@ -10,7 +10,7 @@ import (
 type key int
 
 const (
-	errorKey key = 0
+	errorKey key = iota
 )
 
 // WithError returns a copy of ctx that stores the given error value.

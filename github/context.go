@@ -7,15 +7,14 @@ import (
 	"golang.org/x/net/context"
 )
 
-// unexported key type prevents collisions with keys from other packages
+// unexported key type prevents collisions
 type key int
 
 const (
-	userKey  key = 0
-	errorKey key = 1
+	userKey key = iota
 )
 
-// WithAccessToken returns a copy of ctx that stores the access token value.
+// WithUser returns a copy of ctx that stores the Github User.
 func WithUser(ctx context.Context, user *github.User) context.Context {
 	return context.WithValue(ctx, userKey, user)
 }
@@ -24,7 +23,7 @@ func WithUser(ctx context.Context, user *github.User) context.Context {
 func UserFromContext(ctx context.Context) (*github.User, error) {
 	user, ok := ctx.Value(userKey).(*github.User)
 	if !ok {
-		return nil, fmt.Errorf("Context missing Github user")
+		return nil, fmt.Errorf("Context missing Github User")
 	}
 	return user, nil
 }

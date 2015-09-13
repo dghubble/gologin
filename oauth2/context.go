@@ -10,7 +10,7 @@ import (
 type key int
 
 const (
-	accessTokenKey key = 0
+	accessTokenKey key = iota
 )
 
 // WithAccessToken returns a copy of ctx that stores the access token value.
