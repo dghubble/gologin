@@ -1,6 +1,7 @@
 package github
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/dghubble/ctxh"
@@ -9,6 +10,11 @@ import (
 	"github.com/google/go-github/github"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
+)
+
+// Github login errors
+var (
+	ErrUnableToGetGithubUser = errors.New("github: unable to get Github User")
 )
 
 // LoginHandler handles Github login requests by redirecting to the
@@ -55,4 +61,16 @@ func IncludeUser(config *oauth2.Config, success, failure ctxh.ContextHandler) ct
 		success.ServeHTTP(ctx, w, req)
 	}
 	return ctxh.ContextHandlerFunc(fn)
+}
+
+// validateResponse returns an error if the given Github user, raw
+// http.Response, or error are unexpected. Returns nil if they are valid.
+func validateResponse(user *github.User, resp *github.Response, err error) error {
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return ErrUnableToGetGithubUser
+	}
+	if user == nil || user.ID == nil {
+		return ErrUnableToGetGithubUser
+	}
+	return nil
 }

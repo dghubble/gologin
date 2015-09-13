@@ -1,6 +1,7 @@
 package twitter
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/dghubble/ctxh"
@@ -9,6 +10,11 @@ import (
 	oauth1Login "github.com/dghubble/gologin/oauth1"
 	"github.com/dghubble/oauth1"
 	"golang.org/x/net/context"
+)
+
+// Twitter login errors
+var (
+	ErrUnableToGetTwitterUser = errors.New("twitter: unable to get Twitter User")
 )
 
 // LoginHandler handles Twitter login requests by obtaining a request token and
@@ -41,7 +47,7 @@ func VerifyUser(config *oauth1.Config, success, failure ctxh.ContextHandler) ctx
 			failure.ServeHTTP(ctx, w, req)
 			return
 		}
-		httpClient := config.Client(oauth1.NewToken(accessToken, accessSecret))
+		httpClient := config.Client(ctx, oauth1.NewToken(accessToken, accessSecret))
 		twitterClient := twitter.NewClient(httpClient)
 		accountVerifyParams := &twitter.AccountVerifyParams{
 			IncludeEntities: twitter.Bool(false),
@@ -59,4 +65,16 @@ func VerifyUser(config *oauth1.Config, success, failure ctxh.ContextHandler) ctx
 		success.ServeHTTP(ctx, w, req)
 	}
 	return ctxh.ContextHandlerFunc(fn)
+}
+
+// validateResponse returns an error if the given Twitter user, raw
+// http.Response, or error are unexpected. Returns nil if they are valid.
+func validateResponse(user *twitter.User, resp *http.Response, err error) error {
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return ErrUnableToGetTwitterUser
+	}
+	if user == nil || user.ID == 0 || user.IDStr == "" {
+		return ErrUnableToGetTwitterUser
+	}
+	return nil
 }

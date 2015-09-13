@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/dghubble/go-twitter/twitter"
+	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
+	oauth1Login "github.com/dghubble/gologin/oauth1"
+	"github.com/dghubble/oauth1"
+	"golang.org/x/net/context"
 )
 
 const (
@@ -19,73 +22,34 @@ var (
 	ErrMissingTokenSecret = fmt.Errorf("twitter: missing token field %s", accessTokenSecretField)
 )
 
-// AuthClientSource is an interface for sources of oauth1 token authorized
-// http.Client's. This interface avoids a hard dependency on a particular
-// oauth1 implementation.
-type AuthClientSource interface {
-	GetClient(token, tokenSecret string) *http.Client
-}
-
-// TokenHandlerConfig configures a TokenHandler.
-type TokenHandlerConfig struct {
-	OAuth1Config AuthClientSource
-	Success      SuccessHandler
-	Failure      gologin.ErrorHandler
-}
-
-// TokenHandler receives a POSTed Twitter token/secret and verifies the Twitter
-// credentials. If successful, handling is delegated to the SuccessHandler.
-// Otherwise, the ErrorHandler is called.
-type TokenHandler struct {
-	oauth1Config AuthClientSource
-	success      SuccessHandler
-	failure      gologin.ErrorHandler
-}
-
-// NewTokenHandler returns a new TokenHandler.
-func NewTokenHandler(config *TokenHandlerConfig) *TokenHandler {
-	failure := config.Failure
+// TokenHandler receives a Twitter access token/secret and calls Twitter
+// verify_credentials to get the corresponding User. If successful, the access
+// token/secret and User are added to the ctx and the success handler is
+// called. Otherwise the failure handler is called.
+func TokenHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+	success = VerifyUser(config, success, failure)
 	if failure == nil {
-		failure = gologin.DefaultErrorHandler
+		failure = gologin.DefaultFailureHandler
 	}
-	return &TokenHandler{
-		oauth1Config: config.OAuth1Config,
-		success:      config.Success,
-		failure:      failure,
+	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+		if req.Method != "POST" {
+			ctx = gologin.WithError(ctx, fmt.Errorf("Method not allowed"))
+			failure.ServeHTTP(ctx, w, req)
+			return
+		}
+		req.ParseForm()
+		accessToken := req.PostForm.Get(accessTokenField)
+		accessSecret := req.PostForm.Get(accessTokenSecretField)
+		err := validateToken(accessToken, accessSecret)
+		if err != nil {
+			ctx = gologin.WithError(ctx, err)
+			failure.ServeHTTP(ctx, w, req)
+			return
+		}
+		ctx = oauth1Login.WithAccessToken(ctx, accessToken, accessSecret)
+		success.ServeHTTP(ctx, w, req)
 	}
-}
-
-// ServeHTTP receives a POSTed Twitter token/secret and verifies the Twitter
-// credentials. If successful, handling is delegated to the SuccessHandler.
-// Otherwise, the ErrorHandler is called.
-func (h *TokenHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if req.Method != "POST" {
-		h.failure.ServeHTTP(w, nil, http.StatusMethodNotAllowed)
-		return
-	}
-	req.ParseForm()
-	accessToken := req.PostForm.Get(accessTokenField)
-	accessTokenSecret := req.PostForm.Get(accessTokenSecretField)
-	err := validateToken(accessToken, accessTokenSecret)
-	if err != nil {
-		h.failure.ServeHTTP(w, err, http.StatusBadRequest)
-		return
-	}
-	// verify Twitter access token
-	httpClient := h.oauth1Config.GetClient(accessToken, accessTokenSecret)
-	twitterClient := twitter.NewClient(httpClient)
-	accountVerifyParams := &twitter.AccountVerifyParams{
-		IncludeEntities: twitter.Bool(false),
-		SkipStatus:      twitter.Bool(true),
-		IncludeEmail:    twitter.Bool(false),
-	}
-	user, resp, err := twitterClient.Accounts.VerifyCredentials(accountVerifyParams)
-	err = validateResponse(user, resp, err)
-	if err != nil {
-		h.failure.ServeHTTP(w, err, http.StatusBadRequest)
-		return
-	}
-	h.success.ServeHTTP(w, req, user, accessToken, accessTokenSecret)
+	return ctxh.ContextHandlerFunc(fn)
 }
 
 // validateToken returns an error if the token or token secret is missing.

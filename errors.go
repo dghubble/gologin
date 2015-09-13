@@ -34,10 +34,10 @@ func (e passthroughErrorHandler) ServeHTTP(w http.ResponseWriter, err error, cod
 	http.Error(w, "", code)
 }
 
+// DefaultFailureHandler responds with a 400 status code and message parsed
+// from the ctx.
 var DefaultFailureHandler = ctxh.ContextHandlerFunc(failureHandler)
 
-// failureHandler responds with the error message (possibly empty) from the ctx
-// and a 400 status code.
 func failureHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 	err := ErrorFromContext(ctx)
 	if err != nil {
