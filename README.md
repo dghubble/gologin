@@ -1,30 +1,16 @@
 
 # gologin [![Build Status](https://travis-ci.org/dghubble/gologin.png)](https://travis-ci.org/dghubble/gologin) [![GoDoc](http://godoc.org/github.com/dghubble/gologin?status.png)](http://godoc.org/github.com/dghubble/gologin)
+<img align="right" src="https://storage.googleapis.com/dghubble/gologin.png">
 
-gologin provides boilerplate `http.Handler`s (3-legged OAuth, token login) for popular 3rd party login providers (3-legged OAuth, mobile token login).
+Gologin includes handlers for popular 3rd party authentication providers.
 
-## Status
-
-Alpha
+Choose the package for a login provider and use the `LoginHandler` and `CallbackHandler` to power web logins and the `TokenHandler` to power mobile token logins. 
 
 ### Features
 
-* Register a `LoginHandler` to handle web login and OAuth callbacks.
-* Register a `TokenHandler` to handle mobile token logins.
-* Works with any session library, web token library, and context library.
-
-Login handlers for:
-
-* Twitter
-* Digits (Phone SMS)
-* Github
-* OAuth1
-* OAuth2
-
-Token handlers for:
-
-* Twitter
-* Digits
+* `LoginHandler` and `CallbackHandler` support web login flows
+* `TokenHandler` supports (mobile) token login flows (avail in most packages)
+* Agnostic to any session library or token library.
 
 ## Install
 
@@ -34,16 +20,27 @@ Token handlers for:
 
 Read [GoDoc](https://godoc.org/github.com/dghubble/gologin)
 
+## Packages
+
+#### Github [![GoDoc](http://godoc.org/github.com/dghubble/go-digits/github?status.png)](http://godoc.org/github.com/dghubble/go-digits/github)
+#### Twitter [![GoDoc](http://godoc.org/github.com/dghubble/go-digits/twitter?status.png)](http://godoc.org/github.com/dghubble/go-digits/twitter)
+#### Digits [![GoDoc](http://godoc.org/github.com/dghubble/go-digits/digits?status.png)](http://godoc.org/github.com/dghubble/go-digits/digits)
+#### OAuth2 [![GoDoc](http://godoc.org/github.com/dghubble/go-digits/oauth2?status.png)](http://godoc.org/github.com/dghubble/go-digits/oauth2)
+#### OAuth1 [![GoDoc](http://godoc.org/github.com/dghubble/go-digits/oauth1?status.png)](http://godoc.org/github.com/dghubble/go-digits/oauth1)
+
 ## Roadmap
 
-* Improve test coverage and argument checks.
-* Abstract the dependency on an OAuth1 implementation.
-* Google
+* Use context to pass state between composable ContextHandlers
+* Improve test coverage and argument checks
 * Improve examples and documentation
-* Soundcloud
 * Tumblr
-* Dropbox
+* Google
+* Soundcloud
 * Bitbucket
+
+## Contributing
+
+See the [Contributing Guide](https://gist.github.com/dghubble/be682c123727f70bcfe7).
 
 ## License
 
