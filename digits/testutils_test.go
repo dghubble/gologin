@@ -1,23 +1,11 @@
 package digits
 
 import (
-	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/dghubble/go-digits/digits"
-	"github.com/dghubble/gologin/logintest"
 )
-
-func newDigitsTestServer(jsonData string) (*http.Client, *http.ServeMux, *httptest.Server) {
-	client, mux, server := logintest.TestServer()
-	mux.HandleFunc("/1.1/sdk/account.json", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, jsonData)
-	})
-	return client, mux, server
-}
 
 // successChecks is a SuccessHandler which checks that the test Digits Account
 // was passed.
