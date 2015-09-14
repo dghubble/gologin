@@ -4,8 +4,12 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/dghubble/ctxh"
 	"github.com/dghubble/go-digits/digits"
 	"github.com/dghubble/gologin"
+	oauth1Login "github.com/dghubble/gologin/oauth1"
+	"github.com/dghubble/oauth1"
+	"golang.org/x/net/context"
 )
 
 const (
@@ -19,68 +23,64 @@ var (
 	ErrMissingTokenSecret = fmt.Errorf("digits: missing Token Secret form field %s", accessTokenSecretField)
 )
 
-// AuthClientSource is an interface for sources of oauth1 token authorized
-// http.Client's. This interface avoids a hard dependency on a particular
-// oauth1 implementation.
-type AuthClientSource interface {
-	GetClient(token, tokenSecret string) *http.Client
-}
-
-// TokenHandlerConfig configures a TokenHandler.
-type TokenHandlerConfig struct {
-	OAuth1Config AuthClientSource
-	Success      SuccessHandler
-	Failure      gologin.ErrorHandler
-}
-
-// TokenHandler receives a POSTed Digits token/secret and verifies the Digits
-// credentials. If successful, handling is delegated to the SuccessHandler.
-// Otherwise, the ErrorHandler is called.
-type TokenHandler struct {
-	oauth1Config AuthClientSource
-	success      SuccessHandler
-	failure      gologin.ErrorHandler
-}
-
-// NewTokenHandler returns a new TokenHandler.
-func NewTokenHandler(config *TokenHandlerConfig) *TokenHandler {
-	failure := config.Failure
+// TokenHandler receives a Digits access token/secret and calls the Digits
+// accounts endpoint to get the corresponding Account. If successful, the
+// access token/secret and Account are added to the ctx and the success handler
+// is called. Otherwise, the failure handler is called.
+func TokenHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+	success = verifyAccount(config, success, failure)
 	if failure == nil {
-		failure = gologin.DefaultErrorHandler
+		failure = gologin.DefaultFailureHandler
 	}
-	return &TokenHandler{
-		oauth1Config: config.OAuth1Config,
-		success:      config.Success,
-		failure:      failure,
+	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+		if req.Method != "POST" {
+			ctx = gologin.WithError(ctx, fmt.Errorf("Method not allowed"))
+			failure.ServeHTTP(ctx, w, req)
+			return
+		}
+		req.ParseForm()
+		accessToken := req.PostForm.Get(accessTokenField)
+		accessSecret := req.PostForm.Get(accessTokenSecretField)
+		err := validateToken(accessToken, accessSecret)
+		if err != nil {
+			ctx = gologin.WithError(ctx, err)
+			failure.ServeHTTP(ctx, w, req)
+			return
+		}
+		ctx = oauth1Login.WithAccessToken(ctx, accessToken, accessSecret)
+		success.ServeHTTP(ctx, w, req)
 	}
+	return ctxh.ContextHandlerFunc(fn)
 }
 
-// ServeHTTP receives a POSTed Digits token/secret and verifies the Digits
-// credentials. If successful, handling is delegated to the SuccessHandler.
-// Otherwise, the ErrorHandler is called.
-func (h *TokenHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if req.Method != "POST" {
-		h.failure.ServeHTTP(w, nil, http.StatusMethodNotAllowed)
-		return
+// verifyAccount is a ContextHandler that gets the OAuth1 access token from the
+// ctx and calls the Digits accounts endpoint to get the corresponding Account.
+// If successful, the Account is added to the ctx and the success handler is
+// called. Otherwise, the failure handler is called.
+func verifyAccount(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+	if failure == nil {
+		failure = gologin.DefaultFailureHandler
 	}
-	req.ParseForm()
-	accessToken := req.PostForm.Get(accessTokenField)
-	accessTokenSecret := req.PostForm.Get(accessTokenSecretField)
-	err := validateToken(accessToken, accessTokenSecret)
-	if err != nil {
-		h.failure.ServeHTTP(w, err, http.StatusBadRequest)
-		return
+	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+		accessToken, accessSecret, err := oauth1Login.AccessTokenFromContext(ctx)
+		if err != nil {
+			ctx = gologin.WithError(ctx, err)
+			failure.ServeHTTP(ctx, w, req)
+			return
+		}
+		httpClient := config.Client(ctx, oauth1.NewToken(accessToken, accessSecret))
+		digitsClient := digits.NewClient(httpClient)
+		account, resp, err := digitsClient.Accounts.Account()
+		err = validateResponse(account, resp, err)
+		if err != nil {
+			ctx = gologin.WithError(ctx, err)
+			failure.ServeHTTP(ctx, w, req)
+			return
+		}
+		ctx = WithAccount(ctx, account)
+		success.ServeHTTP(ctx, w, req)
 	}
-	// verify/lookup the Digits Account
-	httpClient := h.oauth1Config.GetClient(accessToken, accessTokenSecret)
-	digitsClient := digits.NewClient(httpClient)
-	account, resp, err := digitsClient.Accounts.Account()
-	err = validateResponse(account, resp, err)
-	if err != nil {
-		h.failure.ServeHTTP(w, err, http.StatusBadRequest)
-		return
-	}
-	h.success.ServeHTTP(w, req, account)
+	return ctxh.ContextHandlerFunc(fn)
 }
 
 // validateToken returns an error if the token or token secret is missing.

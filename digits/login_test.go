@@ -19,7 +19,9 @@ const (
 	testConsumerKey          = "mykey"
 	testAccountEndpoint      = "https://api.digits.com/1.1/sdk/account.json"
 	testAccountRequestHeader = `OAuth oauth_consumer_key="mykey",`
-	testAccountJSON          = `{"access_token": {"token": "t", "secret": "s"}, "phone_number": "0123456789"}`
+	testAccountJSON          = `{"access_token": {"token": "some-token", "secret": "some-secret"}, "phone_number": "0123456789"}`
+	testDigitsToken          = "some-token"
+	testDigitsSecret         = "some-secret"
 )
 
 func TestValidateEcho_missingAccountEndpoint(t *testing.T) {
@@ -131,7 +133,19 @@ func TestWebHandler(t *testing.T) {
 		ConsumerKey: testConsumerKey,
 		Client:      proxyClient,
 	}
-	handler := LoginHandler(config, checkSuccess(t), assertFailureNotCalled(t))
+	success := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+		account, err := AccountFromContext(ctx)
+		assert.Nil(t, err)
+		assert.Equal(t, testDigitsToken, account.AccessToken.Token)
+		assert.Equal(t, testDigitsSecret, account.AccessToken.Secret)
+		assert.Equal(t, "0123456789", account.PhoneNumber)
+
+		endpoint, header, err := EchoFromContext(ctx)
+		assert.Nil(t, err)
+		assert.Equal(t, testAccountEndpoint, endpoint)
+		assert.Equal(t, testAccountRequestHeader, header)
+	}
+	handler := LoginHandler(config, ctxh.ContextHandlerFunc(success), assertFailureNotCalled(t))
 	ts := httptest.NewServer(ctxh.NewHandler(handler))
 	// POST OAuth Echo to server under test
 	resp, err := http.PostForm(ts.URL, url.Values{accountEndpointField: {testAccountEndpoint}, accountRequestHeaderField: {testAccountRequestHeader}})
@@ -208,8 +222,8 @@ func checkSuccess(t *testing.T) ctxh.ContextHandler {
 	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		account, err := AccountFromContext(ctx)
 		assert.Nil(t, err)
-		assert.Equal(t, "t", account.AccessToken.Token)
-		assert.Equal(t, "s", account.AccessToken.Secret)
+		assert.Equal(t, testDigitsToken, account.AccessToken.Token)
+		assert.Equal(t, testDigitsSecret, account.AccessToken.Secret)
 		assert.Equal(t, "0123456789", account.PhoneNumber)
 
 		endpoint, header, err := EchoFromContext(ctx)

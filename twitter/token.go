@@ -25,7 +25,7 @@ var (
 // TokenHandler receives a Twitter access token/secret and calls Twitter
 // verify_credentials to get the corresponding User. If successful, the access
 // token/secret and User are added to the ctx and the success handler is
-// called. Otherwise the failure handler is called.
+// called. Otherwise, the failure handler is called.
 func TokenHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	success = VerifyUser(config, success, failure)
 	if failure == nil {
