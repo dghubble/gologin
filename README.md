@@ -4,12 +4,20 @@
 
 Gologin includes handlers for popular 3rd party authentication providers.
 
-Choose the package for a login provider and use the `LoginHandler` and `CallbackHandler` to power web logins and the `TokenHandler` to power mobile token logins. 
+Choose a login provider package and use the `LoginHandler` and `CallbackHandler` for web logins and the `TokenHandler` for mobile token logins.
+
+### Packages
+
+* Github [docs](http://godoc.org/github.com/dghubble/gologin/github)
+* Twitter [docs](http://godoc.org/github.com/dghubble/gologin/twitter)
+* Digits [docs](http://godoc.org/github.com/dghubble/gologin/digits)
+* OAuth2 [docs](http://godoc.org/github.com/dghubble/gologin/oauth2)
+* OAuth1 [docs](http://godoc.org/github.com/dghubble/gologin/oauth1)
 
 ### Features
 
 * `LoginHandler` and `CallbackHandler` support web login flows
-* `TokenHandler` supports (mobile) token login flows (avail in most packages)
+* `TokenHandler` supports (mobile) token login flows
 * Agnostic to any session library or token library.
 
 ## Install
@@ -20,18 +28,9 @@ Choose the package for a login provider and use the `LoginHandler` and `Callback
 
 Read [GoDoc](https://godoc.org/github.com/dghubble/gologin)
 
-## Packages
-
-#### Github [![GoDoc](http://godoc.org/github.com/dghubble/go-digits/github?status.png)](http://godoc.org/github.com/dghubble/go-digits/github)
-#### Twitter [![GoDoc](http://godoc.org/github.com/dghubble/go-digits/twitter?status.png)](http://godoc.org/github.com/dghubble/go-digits/twitter)
-#### Digits [![GoDoc](http://godoc.org/github.com/dghubble/go-digits/digits?status.png)](http://godoc.org/github.com/dghubble/go-digits/digits)
-#### OAuth2 [![GoDoc](http://godoc.org/github.com/dghubble/go-digits/oauth2?status.png)](http://godoc.org/github.com/dghubble/go-digits/oauth2)
-#### OAuth1 [![GoDoc](http://godoc.org/github.com/dghubble/go-digits/oauth1?status.png)](http://godoc.org/github.com/dghubble/go-digits/oauth1)
-
 ## Roadmap
 
-* Use context to pass state between composable ContextHandlers
-* Improve test coverage and argument checks
+* Improve test coverage
 * Improve examples and documentation
 * Tumblr
 * Google
