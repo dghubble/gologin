@@ -10,9 +10,29 @@ import (
 type key int
 
 const (
-	accessTokenKey key = iota
+	requestTokenKey key = iota
+	requestSecretKey
+	accessTokenKey
 	accessSecretKey
 )
+
+// withRequestToken returns a copy of ctx that stores the request token and
+// secret values.
+func WithRequestToken(ctx context.Context, requestToken, requestSecret string) context.Context {
+	ctx = context.WithValue(ctx, requestTokenKey, requestToken)
+	ctx = context.WithValue(ctx, requestSecretKey, requestSecret)
+	return ctx
+}
+
+// RequestTokenFromContext returns the request token and secret from the ctx.
+func RequestTokenFromContext(ctx context.Context) (string, string, error) {
+	requestToken, okT := ctx.Value(requestTokenKey).(string)
+	requestSecret, okS := ctx.Value(requestSecretKey).(string)
+	if !okT || !okS {
+		return "", "", fmt.Errorf("Context missing request token or secret")
+	}
+	return requestToken, requestSecret, nil
+}
 
 // WithAccessToken returns a copy of ctx that stores the access token and
 // secret values.

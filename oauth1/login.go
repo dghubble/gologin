@@ -10,23 +10,36 @@ import (
 	"golang.org/x/net/context"
 )
 
-// TODO: generalize oauth1 to interface
-// TODO: remove some Twitter specific aspects
-
 // LoginHandler handles OAuth1 login requests by obtaining a request token and
-// redirecting to the authorization URL.
-func LoginHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctxh.ContextHandler {
-	if failure == nil {
-		failure = gologin.DefaultFailureHandler
-	}
+// secret (temporary credentials) and adding it to the ctx. If successful,
+// handling delegates to the success handler, otherwise to the failure handler.
+//
+// Typically, the success handler is an AuthRedirectHandler or a handler which
+// stores the request token secret.
+func LoginHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		requestToken, _, err := config.RequestToken()
+		requestToken, requestSecret, err := config.RequestToken()
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
 			failure.ServeHTTP(ctx, w, req)
 			return
 		}
-		// Twitter does not require the oauth token secret be saved
+		ctx = WithRequestToken(ctx, requestToken, requestSecret)
+		success.ServeHTTP(ctx, w, req)
+	}
+	return ctxh.ContextHandlerFunc(fn)
+}
+
+// RedirectHandler reads the request token from the ctx and redirects
+// to the authorization URL.
+func AuthRedirectHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctxh.ContextHandler {
+	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+		requestToken, _, err := RequestTokenFromContext(ctx)
+		if err != nil {
+			ctx = gologin.WithError(ctx, err)
+			failure.ServeHTTP(ctx, w, req)
+			return
+		}
 		authorizationURL, err := config.AuthorizationURL(requestToken)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
@@ -39,7 +52,8 @@ func LoginHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctxh.Conte
 }
 
 // CallbackHandler handles OAuth1 callback requests by parsing the oauth token
-// and verifier, then obtaining an access token.
+// and verifier, reading the request token secret from the ctx, then obtaining
+// an access token and adding it to the ctx.
 func CallbackHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
@@ -51,9 +65,11 @@ func CallbackHandler(config *oauth1.Config, success, failure ctxh.ContextHandler
 			failure.ServeHTTP(ctx, w, req)
 			return
 		}
-		// Twitter AccessToken endpoint does not require the auth header to be signed
-		// No need to lookup the (temporary) RequestToken secret token.
-		accessToken, accessSecret, err := config.AccessToken(requestToken, "", verifier)
+
+		// upstream handler should add the request token secret from the login step
+		_, requestSecret, err := RequestTokenFromContext(ctx)
+
+		accessToken, accessSecret, err := config.AccessToken(requestToken, requestSecret, verifier)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
 			failure.ServeHTTP(ctx, w, req)

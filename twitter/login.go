@@ -20,7 +20,8 @@ var (
 // LoginHandler handles Twitter login requests by obtaining a request token and
 // redirecting to the authorization URL.
 func LoginHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctxh.ContextHandler {
-	return oauth1Login.LoginHandler(config, failure)
+	success := oauth1Login.AuthRedirectHandler(config, failure)
+	return oauth1Login.LoginHandler(config, success, failure)
 }
 
 // CallbackHandler handles Twitter callback requests by parsing the oauth token
@@ -29,7 +30,19 @@ func LoginHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctxh.Conte
 // otherwise to the failure handler.
 func CallbackHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	success = verifyUser(config, success, failure)
-	return oauth1Login.CallbackHandler(config, success, failure)
+	// set empty request token secret allowed by Twitter access token endpoint
+	return setRequestSecret(oauth1Login.CallbackHandler(config, success, failure))
+}
+
+// setRequestSecret sets an empty request token secret (temporary credential).
+// The Twitter access token endpoint does not require the access token request
+// to be signed so the oauth_token_secret need not be restored.
+func setRequestSecret(success ctxh.ContextHandler) ctxh.ContextHandler {
+	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+		ctx = oauth1Login.WithRequestToken(ctx, "", "")
+		success.ServeHTTP(ctx, w, req)
+	}
+	return ctxh.ContextHandlerFunc(fn)
 }
 
 // verifyUser is a ContextHandler that gets the OAuth1 Access Token from the
