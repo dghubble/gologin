@@ -19,20 +19,22 @@ The page receives OAuth Echo headers which can be posted to a Go server, validat
 
 [main.go](main.go) shows an example web app which uses `gologin` for Digits to issue a client-side cookie session. For simplicity, no data is persisted.
 
-Get your Digits application's consumer key/secret from the [fabric.io](https://fabric.io) dashboard. Paste the **Consumer Key** as the `YOUR_DIGITS_CONSUMER_KEY` in `main.go` and `home.html`.
+Get your Digits application's consumer key from the [fabric.io](https://fabric.io) dashboard.
 
 Note: Currently a Digits application must be created by making a dummy iOS or Android app via the Fabric [iOS Mac App](https://fabric.io/downloads/xcode) or [Android Studio Plugin](https://fabric.io/downloads).
 
-Compile and run from the `examples/digits` directory:
+Compile and run `main.go` from `examples/digits`. Pass the key as an argument to the executable
 
-    go run main.go
+    go run main.go -consumer-key=xx
     2015/09/25 21:44:48 Starting Server listening on localhost:8080
+
+or set the `DIGITS_CONSUMER_KEY` environment variable.
 
 Here is what the web login flow looks like (showing a mobile browser).
 
 <img src="https://storage.googleapis.com/dghubble/digits-web-login.gif">
 
-### How it works
+### Authorization Flow
 
 <img align="right" src="https://storage.googleapis.com/dghubble/digits-phone-number.png">
 

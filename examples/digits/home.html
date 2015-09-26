@@ -12,7 +12,7 @@
     <button id="digits_login" type="button">Login with Digits</button>
   <script>
   $(document).ready(function() {
-    var digitsConsumerKey = 'YOUR_DIGITS_CONSUMER_KEY';
+    var digitsConsumerKey = '{{.digits_consumer_key}}';
     document.getElementById('digits-sdk').onload = function() {
       init();
     };

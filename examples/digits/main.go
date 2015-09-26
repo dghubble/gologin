@@ -2,10 +2,12 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"io/ioutil"
+	"html/template"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin/digits"
@@ -14,24 +16,28 @@ import (
 )
 
 const (
-	digitsConsumerKey = "YOUR_DIGITS_CONSUMER_KEY"
-	sessionName       = "loginapp-session"
-	sessionSecret     = "example cookie signing secret"
-	sessionUserKey    = "digitsID"
+	sessionName    = "example-digits-app"
+	sessionSecret  = "example cookie signing secret"
+	sessionUserKey = "digitsID"
 )
 
 // sessionStore encodes and decodes session data stored in signed cookies
 var sessionStore = sessions.NewCookieStore([]byte(sessionSecret), nil)
 
+// Config configures the main ServeMux.
+type Config struct {
+	DigitsConsumerKey string
+}
+
 // New returns a new ServeMux with app routes.
-func New() *http.ServeMux {
+func New(c *Config) *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", homeHandler)
+	mux.Handle("/", welcomeHandler(c.DigitsConsumerKey))
 	mux.Handle("/profile", requireLogin(http.HandlerFunc(profileHandler)))
 	mux.HandleFunc("/logout", logoutHandler)
 	// 1. Register a Digits LoginHandler to receive Javascript login POST
 	config := &digits.Config{
-		ConsumerKey: digitsConsumerKey,
+		ConsumerKey: c.DigitsConsumerKey,
 	}
 	mux.Handle("/login/digits", ctxh.NewHandler(digits.LoginHandler(config, issueSession(), nil)))
 	return mux
@@ -54,18 +60,30 @@ func issueSession() ctxh.ContextHandler {
 	return ctxh.ContextHandlerFunc(fn)
 }
 
-// homeHandler shows a login page or a user profile page if authenticated.
-func homeHandler(w http.ResponseWriter, req *http.Request) {
-	if req.URL.Path != "/" {
-		http.NotFound(w, req)
-		return
+// welcomeHandler shows a welcome message and login button.
+func welcomeHandler(consumerKey string) http.Handler {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path != "/" {
+			http.NotFound(w, req)
+			return
+		}
+		if isAuthenticated(req) {
+			http.Redirect(w, req, "/profile", http.StatusFound)
+			return
+		}
+		// using a template purely to inject the consumer key into page js
+		tpl, err := template.ParseFiles("home.html")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		err = tpl.Execute(w, map[string]string{"digits_consumer_key": consumerKey})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
-	if isAuthenticated(req) {
-		http.Redirect(w, req, "/profile", http.StatusFound)
-		return
-	}
-	page, _ := ioutil.ReadFile("home.html")
-	fmt.Fprintf(w, string(page))
+	return http.HandlerFunc(fn)
 }
 
 // profileHandler shows protected user content.
@@ -104,8 +122,22 @@ func isAuthenticated(req *http.Request) bool {
 // main creates and starts a Server listening.
 func main() {
 	const address = "localhost:8080"
+	// read consumer key from environment variable if available
+	config := &Config{
+		DigitsConsumerKey: os.Getenv("DIGITS_CONSUMER_KEY"),
+	}
+	// allow consumer key flag to override config fields
+	consumerKey := flag.String("consumer-key", "", "Digits Consumer Key")
+	flag.Parse()
+	if *consumerKey != "" {
+		config.DigitsConsumerKey = *consumerKey
+	}
+	if config.DigitsConsumerKey == "" {
+		log.Fatal("Missing Digits Consumer Key")
+	}
+
 	log.Printf("Starting Server listening on %s\n", address)
-	err := http.ListenAndServe(address, New())
+	err := http.ListenAndServe(address, New(config))
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

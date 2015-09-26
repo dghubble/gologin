@@ -16,6 +16,9 @@ import (
 // LoginHandler handles OAuth1 login requests by obtaining a request token and
 // redirecting to the authorization URL.
 func LoginHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctxh.ContextHandler {
+	if failure == nil {
+		failure = gologin.DefaultFailureHandler
+	}
 	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		requestToken, _, err := config.RequestToken()
 		if err != nil {

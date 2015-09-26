@@ -17,20 +17,20 @@ Package `gologin` provides Go handlers for Twitter which perform the OAuth1 Auth
 
 [main.go](main.go) shows an example web app which uses `gologin` for Twitter to issue a client-side cookie session. For simplicity, no data is persisted.
 
-Get your Twitter application's consumer key/secret from the [fabric.io](https://fabric.io) dashboard or the [old dashboard](https://apps.twitter.com/). Paste the Consumer Key and Secret in `main.go`.
+Get your Twitter application's consumer key/secret from the [fabric.io](https://fabric.io) dashboard or the [old dashboard](https://apps.twitter.com/).
 
-**Warning** Do not add your credentials to source code for a real application.
+Compile and run `main.go` from `examples/twitter`. Pass the key/secret as arguments to the executable
 
-Compile and run from the `examples/twitter` directory:
-
-    go run main.go
+    go run main.go -consumer-key=xx -consumer-secret=yy
     2015/09/25 23:09:13 Starting Server listening on localhost:8080
+
+or set the `TWITTER_CONSUMER_KEY` and `TWITTER_CONSUMER_SECRET` environment variables.
 
 Here's what the flow looks like.
 
 <img src="https://storage.googleapis.com/dghubble/twitter-web-login.gif">
 
-### How it works
+### Authorization FLow
 
 1. Clicking the "Login with Twitter" link to the login handler redirects the user to the Twitter OAuth1 Authorization page to obtain a permission grant.
 2. The callback handler receives the OAuth1 callback and obtains an access token.
