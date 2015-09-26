@@ -2,9 +2,9 @@
 # gologin [![Build Status](https://travis-ci.org/dghubble/gologin.png)](https://travis-ci.org/dghubble/gologin) [![GoDoc](http://godoc.org/github.com/dghubble/gologin?status.png)](http://godoc.org/github.com/dghubble/gologin)
 <img align="right" src="https://storage.googleapis.com/dghubble/gologin.png">
 
-Gologin includes handlers for popular 3rd party authentication providers.
+Gologin provides login handlers for popular 3rd party authentication providers.
 
-Choose a login provider package and use the `LoginHandler` and `CallbackHandler` for web logins and the `TokenHandler` for mobile token logins.
+Choose a login provider package and use the `LoginHandler` and `CallbackHandler` for web logins and the `TokenHandler` for (mobile) token logins.
 
 ### Packages
 
@@ -18,7 +18,7 @@ Choose a login provider package and use the `LoginHandler` and `CallbackHandler`
 
 * `LoginHandler` and `CallbackHandler` support web login flows
 * `TokenHandler` supports (mobile) token login flows
-* Agnostic to any session library or token library.
+* Agnostic to any session library or token library
 
 ## Install
 
