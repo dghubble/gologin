@@ -17,15 +17,15 @@ The page receives OAuth Echo headers which can be posted to a Go server, validat
 
 ## Example App
 
-[app.go](app.go) shows an example web app which uses `gologin` for Digits to issue a client-side cookie session. For simplicity, no data is persisted.
+[main.go](main.go) shows an example web app which uses `gologin` for Digits to issue a client-side cookie session. For simplicity, no data is persisted.
 
-Get your Digits application's consumer key/secret from the [fabric.io](https://fabric.io) dashboard. Paste the **Consumer Key** as the `YOUR_DIGITS_CONSUMER_KEY` in `app.go` and `home.html`.
+Get your Digits application's consumer key/secret from the [fabric.io](https://fabric.io) dashboard. Paste the **Consumer Key** as the `YOUR_DIGITS_CONSUMER_KEY` in `main.go` and `home.html`.
 
 Note: Currently a Digits application must be created by making a dummy iOS or Android app via the Fabric [iOS Mac App](https://fabric.io/downloads/xcode) or [Android Studio Plugin](https://fabric.io/downloads).
 
 Compile and run from the `examples/digits` directory:
 
-    go run app.go
+    go run main.go
     2015/09/25 21:44:48 Starting Server listening on localhost:8080
 
 ### How it works

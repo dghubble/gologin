@@ -1,4 +1,4 @@
-// main is an example web app using Login with Digits (phone number).
+// main is an example web app using Login with Twitter.
 package main
 
 import (
@@ -8,16 +8,19 @@ import (
 	"net/http"
 
 	"github.com/dghubble/ctxh"
-	"github.com/dghubble/gologin/digits"
+	"github.com/dghubble/gologin/twitter"
+	"github.com/dghubble/oauth1"
+	twitterOAuth1 "github.com/dghubble/oauth1/twitter"
 	"github.com/dghubble/sessions"
 	"golang.org/x/net/context"
 )
 
 const (
-	digitsConsumerKey = "YOUR_DIGITS_CONSUMER_KEY"
-	sessionName       = "loginapp-session"
-	sessionSecret     = "example cookie signing secret"
-	sessionUserKey    = "digitsID"
+	twitterConsumerKey    = "TWITTER_CONSUMER_KEY"
+	twitterConsumerSecret = "TWITTER_CONSUMER_SECRET"
+	sessionName           = "app-session"
+	sessionSecret         = "example cookie signing secret"
+	sessionUserKey        = "twitterID"
 )
 
 // sessionStore encodes and decodes session data stored in signed cookies
@@ -29,25 +32,30 @@ func New() *http.ServeMux {
 	mux.HandleFunc("/", homeHandler)
 	mux.Handle("/profile", requireLogin(http.HandlerFunc(profileHandler)))
 	mux.HandleFunc("/logout", logoutHandler)
-	// 1. Register a Digits LoginHandler to receive Javascript login POST
-	config := &digits.Config{
-		ConsumerKey: digitsConsumerKey,
+
+	// 1. Register Twitter login and callback handlers
+	oauth1Config := &oauth1.Config{
+		ConsumerKey:    twitterConsumerKey,
+		ConsumerSecret: twitterConsumerSecret,
+		CallbackURL:    "http://localhost:8080/twitter/callback",
+		Endpoint:       twitterOAuth1.AuthorizeEndpoint,
 	}
-	mux.Handle("/login/digits", ctxh.NewHandler(digits.LoginHandler(config, issueSession(), nil)))
+	mux.Handle("/twitter/login", ctxh.NewHandler(twitter.LoginHandler(oauth1Config, nil)))
+	mux.Handle("/twitter/callback", ctxh.NewHandler(twitter.CallbackHandler(oauth1Config, issueSession(), nil)))
 	return mux
 }
 
-// issueWebSession issues a cookie session after successful Digits login
+// issueSession issues a cookie session after successful Twitter login
 func issueSession() ctxh.ContextHandler {
 	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		digitsAccount, err := digits.AccountFromContext(ctx)
+		twitterUser, err := twitter.UserFromContext(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		// 2. Implement a success handler to issue some form of session
 		session := sessionStore.New(sessionName)
-		session.Values[sessionUserKey] = digitsAccount.ID
+		session.Values[sessionUserKey] = twitterUser.ID
 		session.Save(w)
 		http.Redirect(w, req, "/profile", http.StatusFound)
 	}
@@ -62,6 +70,7 @@ func homeHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	if isAuthenticated(req) {
 		http.Redirect(w, req, "/profile", http.StatusFound)
+		return
 	}
 	page, _ := ioutil.ReadFile("home.html")
 	fmt.Fprintf(w, string(page))
