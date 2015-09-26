@@ -26,6 +26,10 @@ Compile and run from the `examples/twitter` directory:
     go run main.go
     2015/09/25 23:09:13 Starting Server listening on localhost:8080
 
+Here's what the flow looks like.
+
+<img src="https://storage.googleapis.com/dghubble/twitter-web-login.gif">
+
 ### How it works
 
 1. Clicking the "Login with Twitter" link to the login handler redirects the user to the Twitter OAuth1 Authorization page to obtain a permission grant.

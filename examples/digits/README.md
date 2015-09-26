@@ -28,6 +28,10 @@ Compile and run from the `examples/digits` directory:
     go run main.go
     2015/09/25 21:44:48 Starting Server listening on localhost:8080
 
+Here is what the web login flow looks like (showing a mobile browser).
+
+<img src="https://storage.googleapis.com/dghubble/digits-web-login.gif">
+
 ### How it works
 
 <img align="right" src="https://storage.googleapis.com/dghubble/digits-phone-number.png">
