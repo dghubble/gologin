@@ -2,15 +2,16 @@
 # gologin [![Build Status](https://travis-ci.org/dghubble/gologin.png)](https://travis-ci.org/dghubble/gologin) [![GoDoc](http://godoc.org/github.com/dghubble/gologin?status.png)](http://godoc.org/github.com/dghubble/gologin)
 <img align="right" src="https://storage.googleapis.com/dghubble/gologin.png">
 
-Gologin provides composable login handlers for Github, Twitter, Digits, Tumblr and any other OAuth1 or OAuth2 based authentication providers.
+Gologin provides composable login handlers for Github, Twitter, Digits, Bitbucket, Tumblr, OAuth1, OAuth2, and other authentication providers.
 
-Choose the package for an auth provider. Use the `LoginHandler` and `CallbackHandler` for web logins and the `TokenHandler` for (mobile) token logins. Get the verified User/Account and access token from the `ctx`. Grant any kind of session you like.
+Choose the package for an auth provider. Register the `LoginHandler` and `CallbackHandler` for web logins and the `TokenHandler` for (mobile) token logins. Get the verified User/Account and access token from the `ctx`. Grant any kind of session you like.
 
 See [examples](examples) for tutorials with apps you can run from the command line. Visit [whoam.io](https://whoam.io/) to see a live example site running on some Kubernetes clusters.
 
 ### Packages
 
 * Github - [docs](http://godoc.org/github.com/dghubble/gologin/github)
+* Bitbucket [docs](http://godoc.org/github.com/dghubble/gologin/bitbucket)
 * Twitter - [docs](http://godoc.org/github.com/dghubble/gologin/twitter) &#183; [tutorial](examples/twitter)
 * Digits - [docs](http://godoc.org/github.com/dghubble/gologin/digits) &#183; [tutorial](examples/digits)
 * Tumblr - [docs](http://godoc.org/github.com/dghubble/gologin/tumblr)
@@ -21,8 +22,16 @@ See [examples](examples) for tutorials with apps you can run from the command li
 
 * `LoginHandler` and `CallbackHandler` support web login flows
 * `TokenHandler` supports (mobile) token login flows
-* Agnostic to any session library or token library
-* Supports any OAuth1 or OAuth2 authentication provider
+* Get the verified User/Account and access token from the `ctx`
+* Composable handlers work with any mux accepting an `http.Handler`
+* Leverages popular API libraries for models when available (e.g. [go-github](https://github.com/google/go-github) for the Github User)
+* Includes OAuth1 and OAuth2 handlers to make it easy to contribute auth providers.
+
+Just as important, is what `gologin` handlers let you choose.
+
+* Agnostic to any sesison library or token library. Login handlers do not make choices about your session system.
+* Delegates control of OAuth 2 state parameters to `Stater` implementations.
+* Delegates control of OAuth 1 temporary credentials (in-progress)
 
 ## Install
 
@@ -116,17 +125,27 @@ Twitter and Digits include a `TokenHandler` which can be useful for building API
 
 ## Roadmap
 
-* Soundcloud
-* Bitbucket
 * Google
+* Facebook
+* Soundcloud
 * Improve test coverage
 * Improve examples and documentation
 
 ## Contributing
 
-If an auth provider you'd like is missing, please consider contributing it! The ContextHandlers for oauth1 and oauth2 should make it easy to add a package for any OAuth1 or OAuth2 based authentication service. Take a look at the existing ones to see how they work.
+If an auth provider you'd like is missing, please consider contributing it! The ContextHandlers for oauth1 and oauth2 should make it easy to add a package for OAuth1 and OAuth2 providers.
+
+Also, `gologin` strives to use the defacto standard API libraries for User/Account models and verify endpoints. Tumblr and Bitbucket don't seem to have good ones yet so tiny internal API clients are used.
 
 See the [Contributing Guide](https://gist.github.com/dghubble/be682c123727f70bcfe7).
+
+## Motivations
+
+Package `gologin` is focused on the idea that login should performed with small, composable handlers just like any other sort of middleware.
+
+Chiefly, `gologin` addresses my frustrations with the design of [goth](https://github.com/markbates/goth) and [gomniauth](https://github.com/stretchr/gomniauth).
+
+In my own web apps, I primarily use `http.ServeMux` as a mux and `ContextHandler` or `http.Handler` for simple handlers. `ContextHandler` is the minimalist extension of `http.Handler` to pass a `golang.org/x/net/context` Context. For more info, see the [Go Context blog post](https://blog.golang.org/context), [article](https://joeshaw.org/net-context-and-http-handler/) on handlers, and [Talk on Context Plumbing](https://vimeo.com/115309491).
 
 ## License
 
