@@ -1,6 +1,7 @@
 package tumblr
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -15,6 +16,11 @@ const (
 	tempCookieName = "tumblr-temp-secret"
 )
 
+// Tumblr login errors
+var (
+	ErrUnableToGetTumblrUser = errors.New("tumblr: unable to get Tumblr User")
+)
+
 // LoginHandler handles Tumblr login requests by obtaining a request token,
 // setting a temporary token secret cookie, and redirecting to the
 // authorization URL.
@@ -24,10 +30,11 @@ func LoginHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctxh.Conte
 }
 
 // CallbackHandler handles Tumblr callback requests by parsing the oauth token
-// and verifier and adding the Tubmlr access token to the ctx. If
+// and verifier and adding the Tubmlr access token and User to the ctx. If
 // authentication succeeds, handling delegates to the success handler,
 // otherwise to the failure handler.
 func CallbackHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+	success = verifyUser(config, success, failure)
 	callback := oauth1Login.CallbackHandler(config, success, failure)
 	return setRequestSecret(callback, failure)
 }

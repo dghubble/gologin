@@ -16,7 +16,7 @@ const (
 	accessSecretKey
 )
 
-// withRequestToken returns a copy of ctx that stores the request token and
+// WithRequestToken returns a copy of ctx that stores the request token and
 // secret values.
 func WithRequestToken(ctx context.Context, requestToken, requestSecret string) context.Context {
 	ctx = context.WithValue(ctx, requestTokenKey, requestToken)

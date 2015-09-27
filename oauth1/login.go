@@ -30,7 +30,7 @@ func LoginHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) c
 	return ctxh.ContextHandlerFunc(fn)
 }
 
-// RedirectHandler reads the request token from the ctx and redirects
+// AuthRedirectHandler reads the request token from the ctx and redirects
 // to the authorization URL.
 func AuthRedirectHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
