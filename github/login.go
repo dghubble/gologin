@@ -34,7 +34,7 @@ func CallbackHandler(config *oauth2.Config, stater oauth2Login.StateSource, succ
 
 // includeUser is a ContextHandler that gets the OAuth2 access token from the
 // ctx to get the corresponding Github User. If successful, the User is added
-// to the ctx and the success handler is called. Otherwise the failure handler
+// to the ctx and the success handler is called. Otherwise, the failure handler
 // is called.
 func includeUser(config *oauth2.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	if failure == nil {
