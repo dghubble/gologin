@@ -30,7 +30,7 @@ Here's what the flow looks like.
 
 <img src="https://storage.googleapis.com/dghubble/twitter-web-login.gif">
 
-### Authorization FLow
+### Authorization Flow
 
 1. Clicking the "Login with Twitter" link to the login handler redirects the user to the Twitter OAuth1 Authorization page to obtain a permission grant.
 2. The callback handler receives the OAuth1 callback and obtains an access token.
