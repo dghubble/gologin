@@ -11,7 +11,22 @@ type key int
 
 const (
 	accessTokenKey key = iota
+	stateKey
 )
+
+// WithState returns a copy of ctx that stores the state value.
+func WithState(ctx context.Context, state string) context.Context {
+	return context.WithValue(ctx, stateKey, state)
+}
+
+// StateFromContext returns the state value from the ctx.
+func StateFromContext(ctx context.Context) (string, error) {
+	state, ok := ctx.Value(stateKey).(string)
+	if !ok {
+		return "", fmt.Errorf("Context missing OAuth 2 state value")
+	}
+	return state, nil
+}
 
 // WithAccessToken returns a copy of ctx that stores the access token value.
 func WithAccessToken(ctx context.Context, accessToken string) context.Context {

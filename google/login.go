@@ -18,19 +18,27 @@ var (
 	ErrCannotValidateGoogleUser = errors.New("google: could not validate Google User")
 )
 
-// LoginHandler handles Google login requests by redirecting to the
-// authorization URL.
-func LoginHandler(config *oauth2.Config, stater oauth2Login.StateSource) ctxh.ContextHandler {
-	return oauth2Login.LoginHandler(config, stater)
+// StateHandler checks for a temporary state cookie. If found, the state value
+// is read from it and added to the ctx. Otherwise, a temporary state cookie
+// is written and the corresponding state value is added to the ctx.
+//
+// Implements OAuth 2 RFC 6749 10.12 CSRF Protection.
+func StateHandler(success ctxh.ContextHandler) ctxh.ContextHandler {
+	return oauth2Login.StateHandler(success)
 }
 
-// CallbackHandler handles Google callback requests by parsing the auth code
-// and state and adding the Google access token and User to the ctx. If
-// authentication succeeds, handling delegates to the success handler,
-// otherwise to the failure handler.
-func CallbackHandler(config *oauth2.Config, stater oauth2Login.StateSource, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+// LoginHandler handles Google login requests by reading the state value from
+// the ctx and redirecting requests to the AuthURL with that state value.
+func LoginHandler(config *oauth2.Config, failure ctxh.ContextHandler) ctxh.ContextHandler {
+	return oauth2Login.LoginHandler(config, failure)
+}
+
+// CallbackHandler handles Google redirection URI requests and adds the Google
+// access token and Userinfoplus to the ctx. If authentication succeeds,
+// handling delegates to the success handler, otherwise to the failure handler.
+func CallbackHandler(config *oauth2.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	success = includeUser(config, success, failure)
-	return oauth2Login.CallbackHandler(config, stater, success, failure)
+	return oauth2Login.CallbackHandler(config, success, failure)
 }
 
 // includeUser is a ContextHandler that gets the OAuth2 access token from the
