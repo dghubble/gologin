@@ -33,7 +33,7 @@ func WithEcho(ctx context.Context, endpoint, header string) context.Context {
 func AccountFromContext(ctx context.Context) (*digits.Account, error) {
 	account, ok := ctx.Value(accountKey).(*digits.Account)
 	if !ok {
-		return nil, fmt.Errorf("Context missing Digits Account")
+		return nil, fmt.Errorf("digits: Context missing Digits Account")
 	}
 	return account, nil
 }
@@ -43,7 +43,7 @@ func EchoFromContext(ctx context.Context) (string, string, error) {
 	endpoint, okE := ctx.Value(endpointKey).(string)
 	header, okH := ctx.Value(headerKey).(string)
 	if !okE || !okH {
-		return "", "", fmt.Errorf("Context missing Digits echo endpoint or header")
+		return "", "", fmt.Errorf("digits: Context missing Digits echo endpoint or header")
 	}
 	return endpoint, header, nil
 }

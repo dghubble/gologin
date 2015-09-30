@@ -109,7 +109,7 @@ func TestAuthRedirectHandler_MissingCtxRequestToken(t *testing.T) {
 	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
-			assert.Equal(t, "Context missing request token or secret", err.Error())
+			assert.Equal(t, "oauth1: Context missing request token or secret", err.Error())
 		}
 		fmt.Fprintf(w, "failure handler called")
 	}
@@ -215,7 +215,7 @@ func TestCallbackHandler_MissingCtxRequestSecret(t *testing.T) {
 	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
-			assert.Equal(t, "Context missing request token or secret", err.Error())
+			assert.Equal(t, "oauth1: Context missing request token or secret", err.Error())
 		}
 		fmt.Fprintf(w, "failure handler called")
 	}

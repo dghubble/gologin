@@ -29,7 +29,7 @@ func RequestTokenFromContext(ctx context.Context) (string, string, error) {
 	requestToken, okT := ctx.Value(requestTokenKey).(string)
 	requestSecret, okS := ctx.Value(requestSecretKey).(string)
 	if !okT || !okS {
-		return "", "", fmt.Errorf("Context missing request token or secret")
+		return "", "", fmt.Errorf("oauth1: Context missing request token or secret")
 	}
 	return requestToken, requestSecret, nil
 }
@@ -47,7 +47,7 @@ func AccessTokenFromContext(ctx context.Context) (string, string, error) {
 	accessToken, okT := ctx.Value(accessTokenKey).(string)
 	accessSecret, okS := ctx.Value(accessSecretKey).(string)
 	if !okT || !okS {
-		return "", "", fmt.Errorf("Context missing access token or secret")
+		return "", "", fmt.Errorf("oauth1: Context missing access token or secret")
 	}
 	return accessToken, accessSecret, nil
 }

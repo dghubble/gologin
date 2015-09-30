@@ -23,7 +23,7 @@ func WithUser(ctx context.Context, user *twitter.User) context.Context {
 func UserFromContext(ctx context.Context) (*twitter.User, error) {
 	user, ok := ctx.Value(userKey).(*twitter.User)
 	if !ok {
-		return nil, fmt.Errorf("Context missing Twitter User")
+		return nil, fmt.Errorf("twitter: Context missing Twitter User")
 	}
 	return user, nil
 }

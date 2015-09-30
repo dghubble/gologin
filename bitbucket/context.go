@@ -22,7 +22,7 @@ func WithUser(ctx context.Context, user *User) context.Context {
 func UserFromContext(ctx context.Context) (*User, error) {
 	user, ok := ctx.Value(userKey).(*User)
 	if !ok {
-		return nil, fmt.Errorf("Context missing Bitbucket User")
+		return nil, fmt.Errorf("bitbucket: Context missing Bitbucket User")
 	}
 	return user, nil
 }

@@ -23,7 +23,7 @@ func WithUser(ctx context.Context, user *google.Userinfoplus) context.Context {
 func UserFromContext(ctx context.Context) (*google.Userinfoplus, error) {
 	user, ok := ctx.Value(userKey).(*google.Userinfoplus)
 	if !ok {
-		return nil, fmt.Errorf("Context missing Google User")
+		return nil, fmt.Errorf("google: Context missing Google User")
 	}
 	return user, nil
 }

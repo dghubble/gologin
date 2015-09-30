@@ -22,7 +22,7 @@ func TestRequestTokenFromContext_Error(t *testing.T) {
 	assert.Equal(t, "", token)
 	assert.Equal(t, "", secret)
 	if assert.NotNil(t, err) {
-		assert.Equal(t, "Context missing request token or secret", err.Error())
+		assert.Equal(t, "oauth1: Context missing request token or secret", err.Error())
 	}
 }
 
@@ -41,6 +41,6 @@ func TestAccessTokenFromContext_Error(t *testing.T) {
 	assert.Equal(t, "", token)
 	assert.Equal(t, "", secret)
 	if assert.NotNil(t, err) {
-		assert.Equal(t, "Context missing access token or secret", err.Error())
+		assert.Equal(t, "oauth1: Context missing access token or secret", err.Error())
 	}
 }

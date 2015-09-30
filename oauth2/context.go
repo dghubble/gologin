@@ -23,7 +23,7 @@ func WithState(ctx context.Context, state string) context.Context {
 func StateFromContext(ctx context.Context) (string, error) {
 	state, ok := ctx.Value(stateKey).(string)
 	if !ok {
-		return "", fmt.Errorf("Context missing OAuth 2 state value")
+		return "", fmt.Errorf("oauth2: Context missing state value")
 	}
 	return state, nil
 }
@@ -37,7 +37,7 @@ func WithAccessToken(ctx context.Context, accessToken string) context.Context {
 func AccessTokenFromContext(ctx context.Context) (string, error) {
 	accessToken, ok := ctx.Value(accessTokenKey).(string)
 	if !ok {
-		return "", fmt.Errorf("Context missing access token")
+		return "", fmt.Errorf("oauth2: Context missing access token")
 	}
 	return accessToken, nil
 }

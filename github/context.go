@@ -23,7 +23,7 @@ func WithUser(ctx context.Context, user *github.User) context.Context {
 func UserFromContext(ctx context.Context) (*github.User, error) {
 	user, ok := ctx.Value(userKey).(*github.User)
 	if !ok {
-		return nil, fmt.Errorf("Context missing Github User")
+		return nil, fmt.Errorf("github: Context missing Github User")
 	}
 	return user, nil
 }
