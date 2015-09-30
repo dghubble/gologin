@@ -1,4 +1,4 @@
-package logintest
+package testutils
 
 import (
 	"net/http"

@@ -6,10 +6,9 @@ import (
 	"net/url"
 	"testing"
 
-	//"github.com/dghubble/gologin"
 	"github.com/dghubble/ctxh"
-	"github.com/dghubble/gologin/logintest"
 	oauth1Login "github.com/dghubble/gologin/oauth1"
+	"github.com/dghubble/gologin/testutils"
 	"github.com/dghubble/oauth1"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
@@ -59,7 +58,7 @@ func TestTokenHandler(t *testing.T) {
 }
 
 func TestTokenHandler_unauthorized(t *testing.T) {
-	proxyClient, server := logintest.UnauthorizedTestServer()
+	proxyClient, server := testutils.UnauthorizedTestServer()
 	defer server.Close()
 	// oauth1 Client will use the proxy client's base Transport
 	ctx := context.WithValue(context.Background(), oauth1.HTTPClient, proxyClient)
@@ -69,7 +68,7 @@ func TestTokenHandler_unauthorized(t *testing.T) {
 	ts := httptest.NewServer(ctxh.NewHandlerWithContext(ctx, handler))
 	// assert that error occurs indicating the Digits Account could not be confirmed
 	resp, _ := http.PostForm(ts.URL, url.Values{accessTokenField: {testDigitsToken}, accessTokenSecretField: {testDigitsSecret}})
-	logintest.AssertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
+	testutils.AssertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
 }
 
 func TestTokenHandler_NonPost(t *testing.T) {
@@ -93,9 +92,9 @@ func TestTokenHandler_InvalidFields(t *testing.T) {
 	// asert errors occur for different missing POST fields
 	resp, err := http.PostForm(ts.URL, url.Values{"wrongFieldName": {testDigitsToken}, accessTokenSecretField: {testDigitsSecret}})
 	assert.Nil(t, err)
-	logintest.AssertBodyString(t, resp.Body, ErrMissingToken.Error()+"\n")
+	testutils.AssertBodyString(t, resp.Body, ErrMissingToken.Error()+"\n")
 
 	resp, err = http.PostForm(ts.URL, url.Values{accessTokenField: {testDigitsToken}, "wrongFieldName": {testDigitsSecret}})
 	assert.Nil(t, err)
-	logintest.AssertBodyString(t, resp.Body, ErrMissingTokenSecret.Error()+"\n")
+	testutils.AssertBodyString(t, resp.Body, ErrMissingTokenSecret.Error()+"\n")
 }

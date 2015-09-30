@@ -10,7 +10,7 @@ import (
 
 	"github.com/dghubble/ctxh"
 	"github.com/dghubble/go-digits/digits"
-	"github.com/dghubble/gologin/logintest"
+	"github.com/dghubble/gologin/testutils"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 )
@@ -156,7 +156,7 @@ func TestWebHandler(t *testing.T) {
 }
 
 func TestWebHandler_unauthorized(t *testing.T) {
-	proxyClient, server := logintest.UnauthorizedTestServer()
+	proxyClient, server := testutils.UnauthorizedTestServer()
 	defer server.Close()
 
 	config := &Config{
@@ -167,7 +167,7 @@ func TestWebHandler_unauthorized(t *testing.T) {
 	ts := httptest.NewServer(ctxh.NewHandler(handler))
 	// assert that error occurs indicating the Digits Account cound not be confirmed
 	resp, _ := http.PostForm(ts.URL, url.Values{accountEndpointField: {testAccountEndpoint}, accountRequestHeaderField: {testAccountRequestHeader}})
-	logintest.AssertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
+	testutils.AssertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
 }
 
 func TestWebHandler_NonPost(t *testing.T) {
@@ -193,24 +193,24 @@ func TestWebHandler_InvalidFields(t *testing.T) {
 	// assert errors occur for different missing/incorrect POST fields
 	resp, err := http.PostForm(ts.URL, url.Values{"wrongKeyName": {testAccountEndpoint}, accountRequestHeaderField: {testAccountRequestHeader}})
 	assert.Nil(t, err)
-	logintest.AssertBodyString(t, resp.Body, ErrMissingAccountEndpoint.Error()+"\n")
+	testutils.AssertBodyString(t, resp.Body, ErrMissingAccountEndpoint.Error()+"\n")
 
 	resp, err = http.PostForm(ts.URL, url.Values{accountEndpointField: {"https://evil.com"}, accountRequestHeaderField: {testAccountRequestHeader}})
 	assert.Nil(t, err)
-	logintest.AssertBodyString(t, resp.Body, ErrInvalidDigitsEndpoint.Error()+"\n")
+	testutils.AssertBodyString(t, resp.Body, ErrInvalidDigitsEndpoint.Error()+"\n")
 
 	resp, err = http.PostForm(ts.URL, url.Values{accountEndpointField: {testAccountEndpoint}, accountRequestHeaderField: {`OAuth oauth_consumer_key="notmyconsumerkey",`}})
 	assert.Nil(t, err)
-	logintest.AssertBodyString(t, resp.Body, ErrInvalidConsumerKey.Error()+"\n")
+	testutils.AssertBodyString(t, resp.Body, ErrInvalidConsumerKey.Error()+"\n")
 
 	// valid, but incorrect Digits account endpoint
 	resp, err = http.PostForm(ts.URL, url.Values{accountEndpointField: {"https://api.digits.com/1.1/wrong.json"}, accountRequestHeaderField: {testAccountRequestHeader}})
 	assert.Nil(t, err)
-	logintest.AssertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
+	testutils.AssertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
 }
 
 func newDigitsTestServer(jsonData string) (*http.Client, *http.ServeMux, *httptest.Server) {
-	client, mux, server := logintest.TestServer()
+	client, mux, server := testutils.TestServer()
 	mux.HandleFunc("/1.1/sdk/account.json", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, jsonData)

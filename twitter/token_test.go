@@ -9,8 +9,8 @@ import (
 
 	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
-	"github.com/dghubble/gologin/logintest"
 	oauth1Login "github.com/dghubble/gologin/oauth1"
+	"github.com/dghubble/gologin/testutils"
 	"github.com/dghubble/oauth1"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
@@ -52,7 +52,7 @@ func TestTokenHandler(t *testing.T) {
 }
 
 func TestTokenHandler_Unauthorized(t *testing.T) {
-	proxyClient, server := logintest.UnauthorizedTestServer()
+	proxyClient, server := testutils.UnauthorizedTestServer()
 	defer server.Close()
 	// oauth1 Client will use the proxy client's base Transport
 	ctx := context.WithValue(context.Background(), oauth1.HTTPClient, proxyClient)
@@ -62,11 +62,11 @@ func TestTokenHandler_Unauthorized(t *testing.T) {
 	ts := httptest.NewServer(ctxh.NewHandlerWithContext(ctx, handler))
 	// assert that error occurs indicating the Twitter User could not be confirmed
 	resp, _ := http.PostForm(ts.URL, url.Values{accessTokenField: {testTwitterToken}, accessTokenSecretField: {testTwitterTokenSecret}})
-	logintest.AssertBodyString(t, resp.Body, ErrUnableToGetTwitterUser.Error()+"\n")
+	testutils.AssertBodyString(t, resp.Body, ErrUnableToGetTwitterUser.Error()+"\n")
 }
 
 func TestTokenHandler_UnauthorizedPassesError(t *testing.T) {
-	proxyClient, server := logintest.UnauthorizedTestServer()
+	proxyClient, server := testutils.UnauthorizedTestServer()
 	defer server.Close()
 	// oauth1 Client will use the proxy client's base Transport
 	ctx := context.WithValue(context.Background(), oauth1.HTTPClient, proxyClient)
@@ -116,19 +116,19 @@ func TestTokenHandler_InvalidFields(t *testing.T) {
 	// assert errors occur for different missing POST fields
 	resp, err := http.PostForm(ts.URL, nil)
 	assert.Nil(t, err)
-	logintest.AssertBodyString(t, resp.Body, ErrMissingToken.Error()+"\n")
+	testutils.AssertBodyString(t, resp.Body, ErrMissingToken.Error()+"\n")
 
 	resp, err = http.PostForm(ts.URL, url.Values{"wrongFieldName": {testTwitterToken}, accessTokenSecretField: {testTwitterTokenSecret}})
 	assert.Nil(t, err)
-	logintest.AssertBodyString(t, resp.Body, ErrMissingToken.Error()+"\n")
+	testutils.AssertBodyString(t, resp.Body, ErrMissingToken.Error()+"\n")
 
 	resp, err = http.PostForm(ts.URL, url.Values{accessTokenField: {testTwitterToken}, "wrongFieldName": {testTwitterTokenSecret}})
 	assert.Nil(t, err)
-	logintest.AssertBodyString(t, resp.Body, ErrMissingTokenSecret.Error()+"\n")
+	testutils.AssertBodyString(t, resp.Body, ErrMissingTokenSecret.Error()+"\n")
 }
 
 func newTwitterTestServer(jsonData string) (*http.Client, *http.ServeMux, *httptest.Server) {
-	client, mux, server := logintest.TestServer()
+	client, mux, server := testutils.TestServer()
 	mux.HandleFunc("/1.1/account/verify_credentials.json", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, jsonData)
