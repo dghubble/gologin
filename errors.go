@@ -17,5 +17,6 @@ func failureHandler(ctx context.Context, w http.ResponseWriter, req *http.Reques
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	// should be unreachable, ErrorFromContext always returns some non-nil error
 	http.Error(w, "", http.StatusBadRequest)
 }

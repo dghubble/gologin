@@ -1,3 +1,4 @@
+// Package testutils provides utilities for writing gologin tests.
 package testutils
 
 import (

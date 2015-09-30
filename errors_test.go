@@ -10,13 +10,14 @@ import (
 	"golang.org/x/net/context"
 )
 
-func TestDefaultErrorHandler(t *testing.T) {
-	const expectedMessage = "some error"
-	rec := httptest.NewRecorder()
-	// should pass through error
-	ctx := WithError(context.Background(), fmt.Errorf(expectedMessage))
+func TestDefaultFailureHandler(t *testing.T) {
+	expectedError := fmt.Errorf("some error")
+	ctx := WithError(context.Background(), expectedError)
 	req, err := http.NewRequest("GET", "/", nil)
 	assert.Nil(t, err)
-	DefaultFailureHandler.ServeHTTP(ctx, rec, req)
-	assert.Equal(t, expectedMessage+"\n", rec.Body.String())
+	w := httptest.NewRecorder()
+	DefaultFailureHandler.ServeHTTP(ctx, w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	// assert that error message was passed through
+	assert.Equal(t, expectedError.Error()+"\n", w.Body.String())
 }
