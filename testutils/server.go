@@ -1,9 +1,11 @@
 package testutils
 
 import (
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"testing"
 )
 
 // TestServer returns an http Client, ServeMux, and Server. The client proxies
@@ -46,4 +48,19 @@ func (t *RewriteTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 		return http.DefaultTransport.RoundTrip(req)
 	}
 	return t.Transport.RoundTrip(req)
+}
+
+// NewErrorServer returns a new httptest.Server endpoint which responds with
+// the given error message and code. Caller must close the server.
+func NewErrorServer(t *testing.T, message string, code int) *httptest.Server {
+	return NewTestServerFunc(func(w http.ResponseWriter, req *http.Request) {
+		assert.Equal(t, "POST", req.Method)
+		http.Error(w, message, code)
+	})
+}
+
+// NewTestServerFunc is an adapter to allow the use of ordinary functions as
+// httptest.Server's for testing. Caller must close the server.
+func NewTestServerFunc(handler func(w http.ResponseWriter, r *http.Request)) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(handler))
 }

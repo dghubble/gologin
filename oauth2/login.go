@@ -19,7 +19,7 @@ const (
 
 // Errors which may occur on login.
 var (
-	ErrInvalidState = errors.New("gologin: Invalid OAuth2 state parameter")
+	ErrInvalidState = errors.New("oauth2: Invalid OAuth2 state parameter")
 )
 
 // StateHandler checks for a temporary state cookie. If found, the state value
@@ -131,7 +131,7 @@ func parseCallback(req *http.Request) (authCode, state string, err error) {
 	authCode = req.Form.Get("code")
 	state = req.Form.Get("state")
 	if authCode == "" || state == "" {
-		return "", "", errors.New("callback did not receive a code or state")
+		return "", "", errors.New("oauth2: Request missing code or state")
 	}
 	return authCode, state, nil
 }

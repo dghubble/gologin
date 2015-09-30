@@ -54,7 +54,7 @@ func TestLoginHandler(t *testing.T) {
 }
 
 func TestLoginHandler_RequestTokenError(t *testing.T) {
-	server := NewErrorServer(t, "OAuth1 Service Down", http.StatusInternalServerError)
+	server := testutils.NewErrorServer(t, "OAuth1 Service Down", http.StatusInternalServerError)
 	defer server.Close()
 
 	config := &oauth1.Config{
@@ -94,7 +94,9 @@ func TestAuthRedirectHandler(t *testing.T) {
 	}
 	failure := testutils.AssertFailureNotCalled(t)
 
-	// AuthRedirectHandler redirects to the AuthorizationURL
+	// AuthRedirectHandler redirects to the AuthorizationURL, assert that:
+	// - redirect status code is 302
+	// - redirect url is the OAuth1 AuthorizeURL with the ctx request token
 	authRedirectHandler := AuthRedirectHandler(config, failure)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
@@ -232,7 +234,7 @@ func TestCallbackHandler_MissingCtxRequestSecret(t *testing.T) {
 
 func TestCallbackHandler_AccessTokenError(t *testing.T) {
 	requestSecret := "request_secret"
-	server := NewErrorServer(t, "OAuth1 Service Down", http.StatusInternalServerError)
+	server := testutils.NewErrorServer(t, "OAuth1 Service Down", http.StatusInternalServerError)
 	defer server.Close()
 
 	config := &oauth1.Config{
