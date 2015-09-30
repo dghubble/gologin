@@ -17,6 +17,9 @@ import (
 // Typically, the success handler is an AuthRedirectHandler or a handler which
 // stores the request token secret.
 func LoginHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+	if failure == nil {
+		failure = gologin.DefaultFailureHandler
+	}
 	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		requestToken, requestSecret, err := config.RequestToken()
 		if err != nil {
@@ -33,6 +36,9 @@ func LoginHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) c
 // AuthRedirectHandler reads the request token from the ctx and redirects
 // to the authorization URL.
 func AuthRedirectHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctxh.ContextHandler {
+	if failure == nil {
+		failure = gologin.DefaultFailureHandler
+	}
 	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		requestToken, _, err := RequestTokenFromContext(ctx)
 		if err != nil {
@@ -68,6 +74,11 @@ func CallbackHandler(config *oauth1.Config, success, failure ctxh.ContextHandler
 
 		// upstream handler should add the request token secret from the login step
 		_, requestSecret, err := RequestTokenFromContext(ctx)
+		if err != nil {
+			ctx = gologin.WithError(ctx, err)
+			failure.ServeHTTP(ctx, w, req)
+			return
+		}
 
 		accessToken, accessSecret, err := config.AccessToken(requestToken, requestSecret, verifier)
 		if err != nil {
