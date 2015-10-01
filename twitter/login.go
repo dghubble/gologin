@@ -29,7 +29,7 @@ func LoginHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctxh.Conte
 // authentication succeeds, handling delegates to the success handler,
 // otherwise to the failure handler.
 func CallbackHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
-	success = verifyUser(config, success, failure)
+	success = twitterHandler(config, success, failure)
 	// set empty request token secret allowed by Twitter access token endpoint
 	return setRequestSecret(oauth1Login.CallbackHandler(config, success, failure))
 }
@@ -45,11 +45,11 @@ func setRequestSecret(success ctxh.ContextHandler) ctxh.ContextHandler {
 	return ctxh.ContextHandlerFunc(fn)
 }
 
-// verifyUser is a ContextHandler that gets the OAuth1 Access Token from the
-// ctx and calls Twitter verify_credentials to get the corresponding User.
+// twitterHandler is a ContextHandler that gets the OAuth1 Access Token from
+// the ctx and calls Twitter verify_credentials to get the corresponding User.
 // If successful, the User is added to the ctx and the success handler is
 // called. Otherwise the failure handler is called.
-func verifyUser(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func twitterHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}

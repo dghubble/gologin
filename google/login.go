@@ -37,15 +37,15 @@ func LoginHandler(config *oauth2.Config, failure ctxh.ContextHandler) ctxh.Conte
 // access token and Userinfoplus to the ctx. If authentication succeeds,
 // handling delegates to the success handler, otherwise to the failure handler.
 func CallbackHandler(config *oauth2.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
-	success = includeUser(config, success, failure)
+	success = googleHandler(config, success, failure)
 	return oauth2Login.CallbackHandler(config, success, failure)
 }
 
-// includeUser is a ContextHandler that gets the OAuth2 access token from the
+// googleHandler is a ContextHandler that gets the OAuth2 access token from the
 // ctx to get the corresponding Google Userinfoplus. If successful, the user
 // info is added to the ctx and the success handler is called. Otherwise, the
 // failure handler is called.
-func includeUser(config *oauth2.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func googleHandler(config *oauth2.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}

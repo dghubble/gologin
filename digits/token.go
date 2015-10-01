@@ -28,7 +28,7 @@ var (
 // access token/secret and Account are added to the ctx and the success handler
 // is called. Otherwise, the failure handler is called.
 func TokenHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
-	success = verifyAccount(config, success, failure)
+	success = digitsHandler(config, success, failure)
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}
@@ -53,11 +53,11 @@ func TokenHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) c
 	return ctxh.ContextHandlerFunc(fn)
 }
 
-// verifyAccount is a ContextHandler that gets the OAuth1 access token from the
+// digitsHandler is a ContextHandler that gets the OAuth1 access token from the
 // ctx and calls the Digits accounts endpoint to get the corresponding Account.
 // If successful, the Account is added to the ctx and the success handler is
 // called. Otherwise, the failure handler is called.
-func verifyAccount(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func digitsHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}

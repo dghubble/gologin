@@ -91,3 +91,41 @@ func newCookie(name, value string) *http.Cookie {
 	cookie.Expires = time.Now().Add(d)
 	return cookie
 }
+
+func verifyUser(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+	if failure == nil {
+		failure = gologin.DefaultFailureHandler
+	}
+	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+		accessToken, accessSecret, err := oauth1Login.AccessTokenFromContext(ctx)
+		if err != nil {
+			ctx = gologin.WithError(ctx, err)
+			failure.ServeHTTP(ctx, w, req)
+			return
+		}
+		httpClient := config.Client(ctx, oauth1.NewToken(accessToken, accessSecret))
+		tumblrClient := newClient(httpClient)
+		user, resp, err := tumblrClient.UserInfo()
+		err = validateResponse(user, resp, err)
+		if err != nil {
+			ctx = gologin.WithError(ctx, err)
+			failure.ServeHTTP(ctx, w, req)
+			return
+		}
+		ctx = WithUser(ctx, user)
+		success.ServeHTTP(ctx, w, req)
+	}
+	return ctxh.ContextHandlerFunc(fn)
+}
+
+// validateResponse returns an error if the given Tumblr User, raw
+// http.Response, or error are unexpected. Returns nil if they are valid.
+func validateResponse(user *User, resp *http.Response, err error) error {
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return ErrUnableToGetTumblrUser
+	}
+	if user == nil || user.Name == "" {
+		return ErrUnableToGetTumblrUser
+	}
+	return nil
+}
