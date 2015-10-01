@@ -8,6 +8,8 @@ Choose an auth provider package. Register the `LoginHandler` and `CallbackHandle
 
 See [examples](examples) for tutorials with apps you can run from the command line. Visit [whoam.io](https://whoam.io/) to see a live site running on some Kubernetes clusters.
 
+tldr: Chained ContextHandlers which implement the steps of auth flows to provide access tokens and (optional) associated User/Account structs.
+
 ### Packages
 
 * Google - [docs](http://godoc.org/github.com/dghubble/gologin/google)
@@ -19,7 +21,7 @@ See [examples](examples) for tutorials with apps you can run from the command li
 * OAuth2 - [docs](http://godoc.org/github.com/dghubble/gologin/oauth2)
 * OAuth1 - [docs](http://godoc.org/github.com/dghubble/gologin/oauth1)
 
-### Features
+## Features
 
 * `LoginHandler` and `CallbackHandler` support web login flows
 * `TokenHandler` supports native mobile token login flows
@@ -42,9 +44,9 @@ See [examples](examples) for tutorials with apps you can run from the command li
 
 Read [GoDoc](https://godoc.org/github.com/dghubble/gologin)
 
-## Intro
+## Concept
 
-Package `gologin` handlers are `ContextHandler`s which pass data (e.g. tokens, users) via a `ctx` argument and are easy to chain.
+Package `gologin` provides `ContextHandler`'s which can be chained together to implement authorization flows and pass data (e.g. tokens, users) in a `ctx` argument.
 
 ```go
 type ContextHandler interface {
@@ -52,7 +54,9 @@ type ContextHandler interface {
 }
 ```
 
-For example, `oauth1` has `ContextHandler`s for getting request tokens, doing auth redirections, and receiving OAuth1 callbacks. Package `twitter`'s `ContextHandler`'s chain these together and add the Twitter `User` struct to the `ctx`.
+For example, `oauth2` has handlers which generate a state parameter, redirect users to an AuthURL, or validate a redirectURL callback to exchange for a Token.
+
+`gologin` handlers generally take `success` and `failure` ContextHandlers to be called next if an authentication step succeeds or fails. They populate the `ctx` with values needed for the next step. If the flow succeeds, the last success ContextHandler `ctx` should include the access token and (optional)associated User/Account.
 
 [ctxh](https://github.com/dghubble/ctxh) defines a ContextHandler and some convenience functions to convert to a handler which plays well with `net/http`.
 
@@ -62,44 +66,70 @@ func NewHandler(h ContextHandler) http.Handler
 
 ## Usage
 
-To use `gologin`, register a `LoginHandler` and `CallbackHandler` on your `http.ServeMux` and provide a success `ContextHandler` to do something with the verified User/Account and access token added to the `ctx`.
+Choose an auth provider package such as `github` or `twitter`. These packages chain together the lower level `oauth1` and `oauth2` ContextHandlers and fetch the Github or Twitter `User` before calling your success ContextHandler.
 
-Let's consider Twitter web login as an example.
+Let's walk through Github and Twitter web login examples.
 
-Add the imports to your app.
+### Github OAuth2
+
+Register the `LoginHandler` and `CallbackHandler` on your `http.ServeMux`.
 
 ```go
-import (
-    "github.com/dghubble/ctxh"
-    "github.com/dghubble/gologin/twitter"
-    "github.com/dghubble/oauth1"
-    twitterEndpoints "github.com/dghubble/oauth1/twitter"
-    "golang.org/x/net/context"
-)
+config := &oauth2.Config{
+    ClientID:     "GithubClientID",
+    ClientSecret: "GithubClientSecret",
+    RedirectURL:  "http://localhost:8080/callback",
+    Endpoint:     githubOAuth2.Endpoint,
+}
+mux := http.NewServeMux()
+mux.Handle("/login", ctxh.NewHandler(github.StateHandler(github.LoginHandler(config, nil))))
+mux.Handle("/callback", ctxh.NewHandler(github.StateHandler(github.CallbackHandler(config, issueSession(), nil))))
 ```
 
-Configure a config for the `twitter` ContextHandlers `LoginHandler` and `CallbackHandler`.
+Passing nil for the `failure` ContextHandler just means the `DefaultFailureHandler` should be used.
+
+Next, write the success `ContextHandler` to do something with the access token and Github User added to the `ctx` (e.g. issue a cookie session).
+
+```go
+func issueSession() ctxh.ContextHandler {
+    fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+        accessToken, _ := oauth2Login.AccessTokenFromContext(ctx)
+        githubUser, err := github.UserFromContext(ctx)
+        // handle errors and grant the visitor a session (cookie, token, etc.)
+    }
+    return ctxh.ContextHandlerFunc(fn)
+}
+```
+
+See the [Github tutorial](examples/github) for a web app you can run from the command line.
+
+#### In Depth
+
+If you're curious how this works, `github` ContextHandlers chain together the right sequence of `oauth2` (green) ContextHandlers.
+
+<img src="https://storage.googleapis.com/dghubble/gologin-github.png">
+
+The `StateHandler` grants a temproary cookie with a random state value. The `LoginHandler` uses the state value and redirects to the AuthURL to ask the user to grant access. Later, an OAuth2 redirect is sent to the `CallbackHandler`. It validates the temporary state value against the OAuth2 state parameter and exchanges the auth code for an access Token. Github fetches the User and adds it to the `ctx`. Then your success handler is called.
+
+### Twitter OAuth1
+
+Register the `LoginHandler` and `CallbackHandler` on your `http.ServeMux`.
 
 ```go
 config := &oauth1.Config{
     ConsumerKey:    "TwitterConsumerKey",
     ConsumerSecret: "TwitterConsumerSecret",
     CallbackURL:    "http://localhost:8080/callback",
-    Endpoint:       twitterEndpoints.AuthorizeEndpoint,
+    Endpoint:       twitterOAuth1.AuthorizeEndpoint,
 }
-```
-
-Register the `LoginHandler` and `CallbackHandler` on your `http.ServeMux`.
-
-```go
 mux := http.NewServeMux()
 mux.Handle("/login", ctxh.NewHandler(twitter.LoginHandler(config, nil)))
-mux.Handle("/callback", ctxh.NewHandler(twitter.CallbackHandler(config, success(), nil)))
+mux.Handle("/callback", ctxh.NewHandler(twitter.CallbackHandler(config, issueSession(), nil)))
 ```
 
-The last argument is the `failure` ContextHandler which will be called in the event of a failure during the authentication flow. Passing nil means the `DefaultFailureHandler` will be used.
+Passing nil for the `failure` ContextHandler just means the `DefaultFailureHandler` should be used.
 
-Define the success `ContextHandler`. The success handler is the last in the chain and will be called if earlier handlers in the authentication flow succeed. The access token and Twitter `User` can be read from the `ctx`.
+Next, write the success `ContextHandler` to do something with the access token and Twitter User added to the `ctx` (e.g. issue a cookie session).
 
 ```go
 func success() ctxh.ContextHandler {
@@ -112,11 +142,21 @@ func success() ctxh.ContextHandler {
 }
 ```
 
-See the [example](examples) apps for more details.
+See the [Twitter tutorial](examples/twitter) for a web app you can run from the command line.
 
-Check out the available auth provider packages. Each has handlers for the web authorization flow and ensures the `ctx` contains the appropriate type of user/account and the access token.
+#### In Depth
+
+If you're curious how this works, `twitter` ContextHandlers chain together the right sequence of `oauth1` (purple) ContextHandlers.
+
+<img src="https://storage.googleapis.com/dghubble/gologin-twitter.png">
+
+The `LoginHandler` obtains a request token and secret and adds them to the `ctx`.* The `AuthRedirectHandler` redirects to the AuthorizeURL to ask the user to grant access. Later, an OAuth1 callback is sent to the `CallbackHandler` which gets the request token secret from the `ctx`, validates parameters, and gets an access token and secret. Twitter fetches the User and adds it to the `ctx`. Then your success handler is called.
+
+*Note, if the OAuth1 provider requires the request token secret for later steps (e.g. Tumblr) it can be intercepted and persisted. Package `tumblr` does this already.
 
 ### Going Further
+
+Check out the available auth provider packages. Each has handlers for the web authorization flow and ensures the `ctx` contains the appropriate type of user/account and the access token.
 
 If you wish to define your own failure `ContextHandler`, you can get the error from the `ctx` using `ErrorFromContext(ctx)`.
 
@@ -138,7 +178,7 @@ Twitter and Digits include a `TokenHandler` which can be useful for building API
 
 ## Contributing
 
-Please consider contributing additional auth providers, typically by composing the `oauth1` or `oauth2` `ContextHandlers`.
+Please consider contributing! Improving documentation and examples is a good way to start. New auth providers can be implemented by composing the `oauth1` or `oauth2` ContextHandlers.
 
 Also, `gologin` aims to use the defacto standard API libraries for User/Account models and verify endpoints. Tumblr and Bitbucket don't seem to have good ones yet. Tiny internal API clients are used.
 
