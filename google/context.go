@@ -3,8 +3,8 @@ package google
 import (
 	"fmt"
 
-	google "github.com/google/google-api-go-client/oauth2/v2"
 	"golang.org/x/net/context"
+	google "google.golang.org/api/oauth2/v2"
 )
 
 // unexported key type prevents collisions

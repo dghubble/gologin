@@ -7,9 +7,9 @@ import (
 	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
 	oauth2Login "github.com/dghubble/gologin/oauth2"
-	google "github.com/google/google-api-go-client/oauth2/v2"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
+	google "google.golang.org/api/oauth2/v2"
 )
 
 // Google login errors
