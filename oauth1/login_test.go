@@ -67,7 +67,7 @@ func TestLoginHandler_RequestTokenError(t *testing.T) {
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			// first validation in OAuth1 impl failed
-			assert.Equal(t, "oauth_callback_confirmed was not true", err.Error())
+			assert.Equal(t, "oauth1: oauth_callback_confirmed was not true", err.Error())
 		}
 		fmt.Fprintf(w, "failure handler called")
 	}
@@ -196,7 +196,7 @@ func TestCallbackHandler_ParseAuthorizationCallbackError(t *testing.T) {
 	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
-			assert.Equal(t, "Request missing oauth_token or oauth_verifier", err.Error())
+			assert.Equal(t, "oauth1: Request missing oauth_token or oauth_verifier", err.Error())
 		}
 		fmt.Fprintf(w, "failure handler called")
 	}
@@ -246,7 +246,7 @@ func TestCallbackHandler_AccessTokenError(t *testing.T) {
 	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
-			assert.Equal(t, "Response missing oauth_token or oauth_token_secret", err.Error())
+			assert.Equal(t, "oauth1: Response missing oauth_token or oauth_token_secret", err.Error())
 		}
 		fmt.Fprintf(w, "failure handler called")
 	}

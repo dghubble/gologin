@@ -186,21 +186,21 @@ See the [Contributing Guide](https://gist.github.com/dghubble/be682c123727f70bcf
 
 ## Motivations
 
-Package `gologin` is focused on the idea that login should performed with small, composable handlers just like any other sort of middleware. It addresses frustrations with the design of [goth](https://github.com/markbates/goth) and [gomniauth](https://github.com/stretchr/gomniauth).
+Package `gologin` is focused on the idea that login should performed with small, chainable handlers just like any other sort of middleware. It addresses my own frustrations with [goth](https://github.com/markbates/goth) and [gomniauth](https://github.com/stretchr/gomniauth).
 
-* Authentication should be performed with chain-able handlers. Its not special.
+* Authentication should be performed with chainable handlers. Its not special.
 * Session systems are orthogonal to authentication. Let users choose their session/token library.
 * Make it difficult to mess up OAuth 2 CSRF protection, but easy to customize.
-* Handlers provide flexibility. For example, if you don't like the OAuth2 StateHandler (cookie-based), easily write another and compose it.
+* Handlers provide flexibility. Swap OAuth2 StateHandler (cookie-based) for something else if you like.
 * Use quality existing API libraries and their models, where possible.
 * Import only what is needed for the desired authentication providers.
 * ContextHandler's are flippin awesome (see below).
 
 ### But Why Contexts?
 
-Like you perhaps, I originally wanted `gologin` to use only `http.Handler` handlers and `handler(http.Handler) http.Handler` chaining. As much as I favor using the standard library, passing data becomes messy using this design. Global request to context mappings are similarly gross.
+I originally thought `gologin` should use only `http.Handler` handlers and `handler(http.Handler) http.Handler` chaining. Passing request data becomes messy with many custom handler types. Global request to context mappings are similarly gross.
 
-A while ago, some great materials like the [Go Context blog post](https://blog.golang.org/context), Sameer Ajmani's [talk](https://vimeo.com/115309491), and Joe Shaw's [article](https://joeshaw.org/net-context-and-http-handler/) helped convince me that 
+A while ago, some great materials like this Go [blog post](https://blog.golang.org/context), Sameer Ajmani's [Gotham talk](https://vimeo.com/115309491), and Joe Shaw's [article](https://joeshaw.org/net-context-and-http-handler/) helped convince me that 
 
 ```go
 type ContextHandler interface {

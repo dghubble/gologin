@@ -15,11 +15,17 @@ install:
   - go get -v ./twitter
   - go get -v ./digits
   - go get -v ./github
+  - go get -v ./tumblr
+  - go get -v ./bitbucket
+  - go get -v ./google
 script:
   - go test -v ./oauth1
   - go test -v ./oauth2
   - go test -v ./twitter
   - go test -v ./digits
   - go test -v ./github
+  - go test -v ./tumblr
+  - go test -v ./bitbucket
+  - go test -v ./google
   - go vet ./...
   - golint ./...
