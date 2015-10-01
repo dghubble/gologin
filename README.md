@@ -2,7 +2,7 @@
 # gologin [![Build Status](https://travis-ci.org/dghubble/gologin.png)](https://travis-ci.org/dghubble/gologin) [![GoDoc](http://godoc.org/github.com/dghubble/gologin?status.png)](http://godoc.org/github.com/dghubble/gologin)
 <img align="right" src="https://storage.googleapis.com/dghubble/gologin.png">
 
-Package `gologin` provides composable login handlers for Google, Github, Twitter, Digits, Bitbucket, Tumblr, OAuth1, OAuth2, and other authentication providers.
+Package `gologin` provides composable login handlers for Google, Github, Twitter, Digits, Facebook, Bitbucket, Tumblr, OAuth1, OAuth2, and other authentication providers.
 
 Choose an auth provider package. Register the `LoginHandler` and `CallbackHandler` for web logins and the `TokenHandler` for (mobile) token logins. Get the verified User/Account and access token from the `ctx`.
 
@@ -14,6 +14,7 @@ tldr: Chained ContextHandlers which implement the steps of auth flows to provide
 
 * Google - [docs](http://godoc.org/github.com/dghubble/gologin/google)
 * Github - [docs](http://godoc.org/github.com/dghubble/gologin/github) &#183; [tutorial](examples/github)
+* Facebook - [docs](http://godoc.org/github.com/dghubble/gologin/facebook)
 * Twitter - [docs](http://godoc.org/github.com/dghubble/gologin/twitter) &#183; [tutorial](examples/twitter)
 * Digits - [docs](http://godoc.org/github.com/dghubble/gologin/digits) &#183; [tutorial](examples/digits)
 * Bitbucket [docs](http://godoc.org/github.com/dghubble/gologin/bitbucket)
@@ -31,8 +32,8 @@ tldr: Chained ContextHandlers which implement the steps of auth flows to provide
 
 ## Flexibility
 
-* Agnostic to any sesison library or token library. Login handlers should not make choices about your session system.
 * Handlers work with any mux accepting an `http.Handler`
+* Does not attempt to be your session system or token system.
 * Configurable OAuth 2 state parameter handling (in-progress)
 * Configurable OAuth 1 request secret handling (in-progress)
 
