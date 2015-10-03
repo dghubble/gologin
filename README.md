@@ -57,7 +57,7 @@ type ContextHandler interface {
 
 For example, `oauth2` has handlers which generate a state parameter, redirect users to an AuthURL, or validate a redirectURL callback to exchange for a Token.
 
-`gologin` handlers generally take `success` and `failure` ContextHandlers to be called next if an authentication step succeeds or fails. They populate the `ctx` with values needed for the next step. If the flow succeeds, the last success ContextHandler `ctx` should include the access token and (optional)associated User/Account.
+`gologin` handlers generally take `success` and `failure` ContextHandlers to be called next if an authentication step succeeds or fails. They populate the `ctx` with values needed for the next step. If the flow succeeds, the last success ContextHandler `ctx` should include the access token and (optional) associated User/Account.
 
 [ctxh](https://github.com/dghubble/ctxh) defines a ContextHandler and some convenience functions to convert to a handler which plays well with `net/http`.
 
@@ -94,7 +94,7 @@ Next, write the success `ContextHandler` to do something with the access token a
 ```go
 func issueSession() ctxh.ContextHandler {
     fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-        accessToken, _ := oauth2Login.AccessTokenFromContext(ctx)
+        token, _ := oauth2Login.AccessTokenFromContext(ctx)
         githubUser, err := github.UserFromContext(ctx)
         // handle errors and grant the visitor a session (cookie, token, etc.)
     }

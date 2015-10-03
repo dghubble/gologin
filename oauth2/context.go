@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"golang.org/x/net/context"
+	"golang.org/x/oauth2"
 )
 
 // unexported key type prevents collisions
@@ -28,16 +29,16 @@ func StateFromContext(ctx context.Context) (string, error) {
 	return state, nil
 }
 
-// WithAccessToken returns a copy of ctx that stores the access token value.
-func WithAccessToken(ctx context.Context, accessToken string) context.Context {
-	return context.WithValue(ctx, accessTokenKey, accessToken)
+// WithAccessToken returns a copy of ctx that stores the access Token.
+func WithAccessToken(ctx context.Context, token *oauth2.Token) context.Context {
+	return context.WithValue(ctx, accessTokenKey, token)
 }
 
-// AccessTokenFromContext returns the access token value from the ctx.
-func AccessTokenFromContext(ctx context.Context) (string, error) {
-	accessToken, ok := ctx.Value(accessTokenKey).(string)
+// AccessTokenFromContext returns the access Token from the ctx.
+func AccessTokenFromContext(ctx context.Context) (*oauth2.Token, error) {
+	token, ok := ctx.Value(accessTokenKey).(*oauth2.Token)
 	if !ok {
-		return "", fmt.Errorf("oauth2: Context missing access token")
+		return nil, fmt.Errorf("oauth2: Context missing access Token")
 	}
-	return accessToken, nil
+	return token, nil
 }

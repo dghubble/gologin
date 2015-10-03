@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
+	"golang.org/x/oauth2"
 )
 
 func TestContext_State(t *testing.T) {
@@ -24,7 +25,7 @@ func TestContext_MissingState(t *testing.T) {
 }
 
 func TestContext_AccessToken(t *testing.T) {
-	expectedToken := "access_token"
+	expectedToken := &oauth2.Token{AccessToken: "access_token"}
 	ctx := WithAccessToken(context.Background(), expectedToken)
 	token, err := AccessTokenFromContext(ctx)
 	assert.Equal(t, expectedToken, token)
@@ -33,8 +34,8 @@ func TestContext_AccessToken(t *testing.T) {
 
 func TestAccessTokenFromContext_Error(t *testing.T) {
 	token, err := AccessTokenFromContext(context.Background())
-	assert.Equal(t, "", token)
+	assert.Nil(t, token)
 	if assert.NotNil(t, err) {
-		assert.Equal(t, "oauth2: Context missing access token", err.Error())
+		assert.Equal(t, "oauth2: Context missing access Token", err.Error())
 	}
 }

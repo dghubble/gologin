@@ -41,22 +41,21 @@ func CallbackHandler(config *oauth2.Config, success, failure ctxh.ContextHandler
 	return oauth2Login.CallbackHandler(config, success, failure)
 }
 
-// googleHandler is a ContextHandler that gets the OAuth2 access token from the
-// ctx to get the corresponding Google Userinfoplus. If successful, the user
-// info is added to the ctx and the success handler is called. Otherwise, the
+// googleHandler is a ContextHandler that gets the OAuth2 Token from the ctx
+// to get the corresponding Google Userinfoplus. If successful, the user info
+// is added to the ctx and the success handler is called. Otherwise, the
 // failure handler is called.
 func googleHandler(config *oauth2.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}
 	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		accessToken, err := oauth2Login.AccessTokenFromContext(ctx)
+		token, err := oauth2Login.AccessTokenFromContext(ctx)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
 			failure.ServeHTTP(ctx, w, req)
 			return
 		}
-		token := &oauth2.Token{AccessToken: accessToken}
 		httpClient := config.Client(ctx, token)
 		googleService, err := google.New(httpClient)
 		if err != nil {

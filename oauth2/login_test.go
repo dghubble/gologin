@@ -66,14 +66,17 @@ func TestLoginHandler_MissingCtxState(t *testing.T) {
 
 func TestCallbackHandler(t *testing.T) {
 	expectedState := "d4e5f6"
-	expectedToken := "2YotnFZFEjr1zCsicMWpAA"
 	jsonData := `{
        "access_token":"2YotnFZFEjr1zCsicMWpAA",
        "token_type":"example",
-       "expires_in":3600,
        "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA",
        "example_parameter":"example_value"
      }`
+	expectedToken := &oauth2.Token{
+		AccessToken:  "2YotnFZFEjr1zCsicMWpAA",
+		TokenType:    "example",
+		RefreshToken: "tGzv3JOkF0XG5Qx2TlKWIA",
+	}
 	server := NewAccessTokenServer(t, jsonData)
 	defer server.Close()
 
@@ -83,8 +86,11 @@ func TestCallbackHandler(t *testing.T) {
 		},
 	}
 	success := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		accessToken, err := AccessTokenFromContext(ctx)
-		assert.Equal(t, expectedToken, accessToken)
+		token, err := AccessTokenFromContext(ctx)
+		assert.Equal(t, expectedToken.AccessToken, token.AccessToken)
+		assert.Equal(t, expectedToken.TokenType, token.Type())
+		assert.Equal(t, expectedToken.RefreshToken, token.RefreshToken)
+		// real oauth2.Token populates internal raw field and unmockable Expiry time
 		assert.Nil(t, err)
 		fmt.Fprintf(w, "success handler called")
 	}

@@ -63,7 +63,7 @@ func LoginHandler(config *oauth2.Config, failure ctxh.ContextHandler) ctxh.Conte
 
 // CallbackHandler handles OAuth2 redirection URI requests by parsing the auth
 // code and state, comparing with the state value from the ctx, and obtaining
-// an access token.
+// an OAuth2 Token.
 func CallbackHandler(config *oauth2.Config, success ctxh.ContextHandler, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
@@ -86,14 +86,14 @@ func CallbackHandler(config *oauth2.Config, success ctxh.ContextHandler, failure
 			failure.ServeHTTP(ctx, w, req)
 			return
 		}
-		// use the authorization code to get an access token
+		// use the authorization code to get a Token
 		token, err := config.Exchange(ctx, authCode)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
 			failure.ServeHTTP(ctx, w, req)
 			return
 		}
-		ctx = WithAccessToken(ctx, token.AccessToken)
+		ctx = WithAccessToken(ctx, token)
 		success.ServeHTTP(ctx, w, req)
 	}
 	return ctxh.ContextHandlerFunc(fn)
