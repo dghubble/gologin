@@ -93,7 +93,7 @@ func CallbackHandler(config *oauth2.Config, success ctxh.ContextHandler, failure
 			failure.ServeHTTP(ctx, w, req)
 			return
 		}
-		ctx = WithAccessToken(ctx, token)
+		ctx = WithToken(ctx, token)
 		success.ServeHTTP(ctx, w, req)
 	}
 	return ctxh.ContextHandlerFunc(fn)

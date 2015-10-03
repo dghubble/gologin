@@ -11,7 +11,7 @@ import (
 type key int
 
 const (
-	accessTokenKey key = iota
+	tokenKey key = iota
 	stateKey
 )
 
@@ -29,16 +29,16 @@ func StateFromContext(ctx context.Context) (string, error) {
 	return state, nil
 }
 
-// WithAccessToken returns a copy of ctx that stores the access Token.
-func WithAccessToken(ctx context.Context, token *oauth2.Token) context.Context {
-	return context.WithValue(ctx, accessTokenKey, token)
+// WithToken returns a copy of ctx that stores the Token.
+func WithToken(ctx context.Context, token *oauth2.Token) context.Context {
+	return context.WithValue(ctx, tokenKey, token)
 }
 
-// AccessTokenFromContext returns the access Token from the ctx.
-func AccessTokenFromContext(ctx context.Context) (*oauth2.Token, error) {
-	token, ok := ctx.Value(accessTokenKey).(*oauth2.Token)
+// TokenFromContext returns the Token from the ctx.
+func TokenFromContext(ctx context.Context) (*oauth2.Token, error) {
+	token, ok := ctx.Value(tokenKey).(*oauth2.Token)
 	if !ok {
-		return nil, fmt.Errorf("oauth2: Context missing access Token")
+		return nil, fmt.Errorf("oauth2: Context missing Token")
 	}
 	return token, nil
 }

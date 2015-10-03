@@ -89,12 +89,12 @@ mux.Handle("/callback", ctxh.NewHandler(github.StateHandler(github.CallbackHandl
 
 Passing nil for the `failure` ContextHandler just means the `DefaultFailureHandler` should be used.
 
-Next, write the success `ContextHandler` to do something with the access token and Github User added to the `ctx` (e.g. issue a cookie session).
+Next, write the success `ContextHandler` to do something with the Token and Github User added to the `ctx` (e.g. issue a cookie session).
 
 ```go
 func issueSession() ctxh.ContextHandler {
     fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-        token, _ := oauth2Login.AccessTokenFromContext(ctx)
+        token, _ := oauth2Login.TokenFromContext(ctx)
         githubUser, err := github.UserFromContext(ctx)
         // handle errors and grant the visitor a session (cookie, token, etc.)
     }
@@ -110,7 +110,7 @@ If you're curious how this works, `github` ContextHandlers chain together the ri
 
 <img src="https://storage.googleapis.com/dghubble/gologin-github.png">
 
-The `StateHandler` grants a temproary cookie with a random state value. The `LoginHandler` uses the state value and redirects to the AuthURL to ask the user to grant access. Later, an OAuth2 redirect is sent to the `CallbackHandler`. It validates the temporary state value against the OAuth2 state parameter and exchanges the auth code for an access Token. Github fetches the User and adds it to the `ctx`. Then your success handler is called.
+The `StateHandler` grants a temproary cookie with a random state value. The `LoginHandler` uses the state value and redirects to the AuthURL to ask the user to grant access. Later, an OAuth2 redirect is sent to the `CallbackHandler`. It validates the temporary state value against the OAuth2 state parameter and exchanges the auth code for an Token. Github fetches the User and adds it to the `ctx`. Then your success handler is called.
 
 ### Twitter OAuth1
 

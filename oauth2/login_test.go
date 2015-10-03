@@ -86,7 +86,7 @@ func TestCallbackHandler(t *testing.T) {
 		},
 	}
 	success := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		token, err := AccessTokenFromContext(ctx)
+		token, err := TokenFromContext(ctx)
 		assert.Equal(t, expectedToken.AccessToken, token.AccessToken)
 		assert.Equal(t, expectedToken.TokenType, token.Type())
 		assert.Equal(t, expectedToken.RefreshToken, token.RefreshToken)

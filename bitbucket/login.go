@@ -49,7 +49,7 @@ func bitbucketHandler(config *oauth2.Config, success, failure ctxh.ContextHandle
 		failure = gologin.DefaultFailureHandler
 	}
 	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		token, err := oauth2Login.AccessTokenFromContext(ctx)
+		token, err := oauth2Login.TokenFromContext(ctx)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
 			failure.ServeHTTP(ctx, w, req)

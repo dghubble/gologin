@@ -24,18 +24,18 @@ func TestContext_MissingState(t *testing.T) {
 	}
 }
 
-func TestContext_AccessToken(t *testing.T) {
+func TestContext_Token(t *testing.T) {
 	expectedToken := &oauth2.Token{AccessToken: "access_token"}
-	ctx := WithAccessToken(context.Background(), expectedToken)
-	token, err := AccessTokenFromContext(ctx)
+	ctx := WithToken(context.Background(), expectedToken)
+	token, err := TokenFromContext(ctx)
 	assert.Equal(t, expectedToken, token)
 	assert.Nil(t, err)
 }
 
-func TestAccessTokenFromContext_Error(t *testing.T) {
-	token, err := AccessTokenFromContext(context.Background())
+func TestTokenFromContext_Error(t *testing.T) {
+	token, err := TokenFromContext(context.Background())
 	assert.Nil(t, token)
 	if assert.NotNil(t, err) {
-		assert.Equal(t, "oauth2: Context missing access Token", err.Error())
+		assert.Equal(t, "oauth2: Context missing Token", err.Error())
 	}
 }
