@@ -8,7 +8,7 @@ Choose an auth provider package. Register the `LoginHandler` and `CallbackHandle
 
 See [examples](examples) for tutorials with apps you can run from the command line. Visit [whoam.io](https://whoam.io/) to see a live site running on some Kubernetes clusters.
 
-tldr: Chained ContextHandlers which implement the steps of auth flows to provide access tokens and (optional) associated User/Account structs.
+**tldr**: Handlers which implement the steps of standard auth flows to provide access tokens and associated User/Account structs.
 
 ### Packages
 
@@ -66,7 +66,7 @@ func NewHandler(h ContextHandler) http.Handler
 
 ## Usage
 
-Choose an auth provider package such as `github` or `twitter`. These packages chain together the lower level `oauth1` and `oauth2` ContextHandlers and fetch the Github or Twitter `User` before calling your success ContextHandler.
+Choose an auth provider package such as `github` or `twitter`. These packages chain together lower level `oauth1` and `oauth2` ContextHandlers and fetch the Github or Twitter `User` before calling your success ContextHandler.
 
 Let's walk through Github and Twitter web login examples.
 
@@ -86,9 +86,15 @@ mux.Handle("/login", ctxh.NewHandler(github.StateHandler(github.LoginHandler(con
 mux.Handle("/callback", ctxh.NewHandler(github.StateHandler(github.CallbackHandler(config, issueSession(), nil))))
 ```
 
-Passing nil for the `failure` ContextHandler just means the `DefaultFailureHandler` should be used.
+The `StateHandler` checks for an OAuth2 state parameter cookie, generates a non-guessable state as a short-lived cookie if missing, and passes the state value in the ctx. StateHandler issues HTTPS-only cookies by default, so for development you may wish to pass `StateHandler` the optional `gologin.DebugOnlyCookieOptions`. ([info](#state-parameters))
 
-Next, write the success `ContextHandler` to do something with the Token and Github User added to the `ctx` (e.g. issue a cookie session).
+The `github` `LoginHandler` reads the state from the ctx and redirects to the AuthURL (at github.com) to prompt the user to grant access. Passing nil for the `failure` ContextHandler just means the `DefaultFailureHandler` should be used, which reports errors. ([info](#failure-handlers))
+
+The `github` `CallbackHandler` receives an auth code and state OAuth2 redirection, validates the state against the state in the ctx, and exchanges the auth code for an OAuth2 Token. The `github` CallbackHandler wraps the lower level `oauth2` `CallbackHandler` to further use the Token to obtain the Github `User` before calling through to the success or failure handlers.
+
+<img src="https://storage.googleapis.com/dghubble/gologin-github.png">
+
+Next, write the success `ContextHandler` to do something with the Token and Github User added to the `ctx`.
 
 ```go
 func issueSession() ctxh.ContextHandler {
@@ -102,14 +108,6 @@ func issueSession() ctxh.ContextHandler {
 ```
 
 See the [Github tutorial](examples/github) for a web app you can run from the command line.
-
-#### In Depth
-
-If you're curious how this works, `github` ContextHandlers chain together the right sequence of `oauth2` (green) ContextHandlers.
-
-<img src="https://storage.googleapis.com/dghubble/gologin-github.png">
-
-The `StateHandler` grants a temproary cookie with a random state value. The `LoginHandler` uses the state value and redirects to the AuthURL to ask the user to grant access. Later, an OAuth2 redirect is sent to the `CallbackHandler`. It validates the temporary state value against the OAuth2 state parameter and exchanges the auth code for an Token. Github fetches the User and adds it to the `ctx`. Then your success handler is called.
 
 ### Twitter OAuth1
 
@@ -127,9 +125,13 @@ mux.Handle("/login", ctxh.NewHandler(twitter.LoginHandler(config, nil)))
 mux.Handle("/callback", ctxh.NewHandler(twitter.CallbackHandler(config, issueSession(), nil)))
 ```
 
-Passing nil for the `failure` ContextHandler just means the `DefaultFailureHandler` should be used.
+The `twitter` `LoginHandler` obtains a request token and secret, adds them to the ctx, and redirects to the AuthorizeURL to prompt the user to grant access. Passing nil for the `failure` ContextHandler just means the `DefaultFailureHandler` should be used, which reports errors. ([info](#failure-handlers))
 
-Next, write the success `ContextHandler` to do something with the access token and Twitter User added to the `ctx` (e.g. issue a cookie session).
+The `twitter` `CallbackHandler` receives an OAuth1 token and verifier, reads the request secret from the ctx, and obtains an OAuth1 access token and secret. The `twitter` CallbackHandler wraps the lower level `oauth1` CallbackHandler to further use the access token/secret to obtain the Twitter `User` before calling through to the success or failure handlers.
+
+<img src="https://storage.googleapis.com/dghubble/gologin-twitter.png">
+
+Next, write the success `ContextHandler` to do something with the access token/secret and Twitter User added to the `ctx`.
 
 ```go
 func success() ctxh.ContextHandler {
@@ -142,28 +144,28 @@ func success() ctxh.ContextHandler {
 }
 ```
 
+*Note: Some OAuth1 providers (not Twitter), require the request secret be persisted until the callback is received. For this reason, the lower level `oauth1` package splits LoginHandler functionality into a `LoginHandler` and `AuthRedirectHandler`. Provider packages, like `tumblr`, chain these together for you, but the lower level handlers are there if needed.
+
 See the [Twitter tutorial](examples/twitter) for a web app you can run from the command line.
 
-#### In Depth
+### State Parameters
 
-If you're curious how this works, `twitter` ContextHandlers chain together the right sequence of `oauth1` (purple) ContextHandlers.
+OAuth2 `StateHandler` implements OAuth 2 [RFC 6749](https://tools.ietf.org/html/rfc6749) 10.12 CSRF Protection using non-guessable values in short-lived cookies to ensure the user in the login phase and callback phase are the same. If you wish to implement this differently, write a `ContextHandler` which sets a *state* in the ctx, which is expected by LoginHandler and CallbackHandler.
 
-<img src="https://storage.googleapis.com/dghubble/gologin-twitter.png">
+You may use `oauth2.WithState(context.Context, state string)` for this. [docs](https://godoc.org/github.com/dghubble/gologin/oauth2#WithState)
 
-The `LoginHandler` obtains a request token and secret and adds them to the `ctx`.* The `AuthRedirectHandler` redirects to the AuthorizeURL to ask the user to grant access. Later, an OAuth1 callback is sent to the `CallbackHandler` which gets the request token secret from the `ctx`, validates parameters, and gets an access token and secret. Twitter fetches the User and adds it to the `ctx`. Then your success handler is called.
+### Failure Handlers
 
-*Note, if the OAuth1 provider requires the request token secret for later steps (e.g. Tumblr) it can be intercepted and persisted. Package `tumblr` does this already.
+If you wish to define your own failure `ContextHandler`, you can get the error from the `ctx` using `gologin.ErrorFromContext(ctx)`.
+
+### Production Tips
+
+* Always use HTTPS
+* Keep your OAuth Consumer/Client secret out of source control
 
 ### Going Further
 
 Check out the available auth provider packages. Each has handlers for the web authorization flow and ensures the `ctx` contains the appropriate type of user/account and the access token.
-
-If you wish to define your own failure `ContextHandler`, you can get the error from the `ctx` using `ErrorFromContext(ctx)`.
-
-## Production
-
-* Always use HTTPS
-* Keep your OAuth Consumer/Client secret out of source control
 
 ## Mobile
 
@@ -191,9 +193,9 @@ Package `gologin` is focused on the idea that login should performed with small,
 * Authentication should be orthogonal to the session system. Let users choose their session/token library.
 * OAuth2 State CSRF should be included out of the box, but easy to customzie.
 * Packages should import only what is required for chosen providers. OAuth1 and OAuth2 packages are separate.
-* ContextHandler's are very flexible and chainable.
+* ContextHandlers are flexible and useful for more than just data passing.
 
-### But Why Contexts?
+### Why Contexts?
 
 I originally thought `gologin` should use only `http.Handler` handlers and `handler(http.Handler) http.Handler` chaining. Passing request data becomes messy with many custom handler types. Global request to context mappings are similarly gross.
 
