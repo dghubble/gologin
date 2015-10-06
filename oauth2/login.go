@@ -5,10 +5,10 @@ import (
 	"encoding/base64"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
+	"github.com/dghubble/gologin/internal"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
@@ -22,19 +22,24 @@ var (
 	ErrInvalidState = errors.New("oauth2: Invalid OAuth2 state parameter")
 )
 
-// StateHandler checks for a temporary state cookie. If found, the state value
-// is read from it and added to the ctx. Otherwise, a temporary state cookie
-// is written and the corresponding state value is added to the ctx.
+// StateHandler checks for a state cookie. If found, the state value is read
+// and added to the ctx. Otherwise, a non-guessable value is added to the ctx
+// and to a (short-lived) state cookie issued to the requester.
 //
-// Implements OAuth 2 RFC 6749 10.12 CSRF Protection.
-func StateHandler(success ctxh.ContextHandler) ctxh.ContextHandler {
+// Implements OAuth 2 RFC 6749 10.12 CSRF Protection. If you wish to issue
+// state params differently, write a ContextHandler which sets the ctx state,
+// using oauth2 WithState(ctx, state) since it is required by LoginHandler
+// and CallbackHandler.
+func StateHandler(success ctxh.ContextHandler, opts ...gologin.CookieOptions) ctxh.ContextHandler {
 	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		cookie, err := req.Cookie(stateCookie)
 		if err == nil {
+			// add the cookie state to the ctx
 			ctx = WithState(ctx, cookie.Value)
 		} else {
+			// add Cookie with a random state
 			val := randomState()
-			http.SetCookie(w, newCookie(stateCookie, val))
+			http.SetCookie(w, internal.NewCookie(stateCookie, val, opts...))
 			ctx = WithState(ctx, val)
 		}
 		success.ServeHTTP(ctx, w, req)
@@ -64,7 +69,7 @@ func LoginHandler(config *oauth2.Config, failure ctxh.ContextHandler) ctxh.Conte
 // CallbackHandler handles OAuth2 redirection URI requests by parsing the auth
 // code and state, comparing with the state value from the ctx, and obtaining
 // an OAuth2 Token.
-func CallbackHandler(config *oauth2.Config, success ctxh.ContextHandler, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func CallbackHandler(config *oauth2.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}
@@ -104,21 +109,6 @@ func randomState() string {
 	b := make([]byte, 32)
 	rand.Read(b)
 	return base64.StdEncoding.EncodeToString(b)
-}
-
-// TODO: cookie creation should be configurable
-func newCookie(name, value string) *http.Cookie {
-	cookie := &http.Cookie{
-		Name:     name,
-		Value:    value,
-		Path:     "/",
-		MaxAge:   60,
-		Secure:   false, //TODO
-		HttpOnly: true,
-	}
-	d := time.Duration(60) * time.Second
-	cookie.Expires = time.Now().Add(d)
-	return cookie
 }
 
 // parseCallback parses the "code" and "state" parameters from the http.Request

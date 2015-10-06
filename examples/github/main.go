@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/dghubble/ctxh"
+	"github.com/dghubble/gologin"
 	"github.com/dghubble/gologin/github"
 	"github.com/dghubble/sessions"
 	"golang.org/x/net/context"
@@ -37,15 +38,17 @@ func New(config *Config) *http.ServeMux {
 	mux.HandleFunc("/", welcomeHandler)
 	mux.Handle("/profile", requireLogin(http.HandlerFunc(profileHandler)))
 	mux.HandleFunc("/logout", logoutHandler)
-	// 1. Register Github login and callback handlers
+	// 1. Register LoginHandler and CallbackHandler
 	oauth2Config := &oauth2.Config{
 		ClientID:     config.GithubClientID,
 		ClientSecret: config.GithubClientSecret,
 		RedirectURL:  "http://localhost:8080/github/callback",
 		Endpoint:     githubOAuth2.Endpoint,
 	}
-	mux.Handle("/github/login", ctxh.NewHandler(github.StateHandler(github.LoginHandler(oauth2Config, nil))))
-	mux.Handle("/github/callback", ctxh.NewHandler(github.StateHandler(github.CallbackHandler(oauth2Config, issueSession(), nil))))
+	// state param cookies require HTTPS by default; disable for localhost development
+	stateConfig := gologin.DebugOnlyCookieOptions
+	mux.Handle("/github/login", ctxh.NewHandler(github.StateHandler(github.LoginHandler(oauth2Config, nil), stateConfig)))
+	mux.Handle("/github/callback", ctxh.NewHandler(github.StateHandler(github.CallbackHandler(oauth2Config, issueSession(), nil), stateConfig)))
 	return mux
 }
 

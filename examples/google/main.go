@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/dghubble/ctxh"
+	"github.com/dghubble/gologin"
 	"github.com/dghubble/gologin/google"
 	"github.com/dghubble/sessions"
 	"golang.org/x/net/context"
@@ -45,8 +46,10 @@ func New(config *Config) *http.ServeMux {
 		Endpoint:     googleOAuth2.Endpoint,
 		Scopes:       []string{"profile", "email"},
 	}
-	mux.Handle("/google/login", ctxh.NewHandler(google.StateHandler(google.LoginHandler(oauth2Config, nil))))
-	mux.Handle("/google/callback", ctxh.NewHandler(google.StateHandler(google.CallbackHandler(oauth2Config, issueSession(), nil))))
+	// state param cookies require HTTPS by default; disable for localhost development
+	stateConfig := gologin.DebugOnlyCookieOptions
+	mux.Handle("/google/login", ctxh.NewHandler(google.StateHandler(google.LoginHandler(oauth2Config, nil), stateConfig)))
+	mux.Handle("/google/callback", ctxh.NewHandler(google.StateHandler(google.CallbackHandler(oauth2Config, issueSession(), nil), stateConfig)))
 	return mux
 }
 

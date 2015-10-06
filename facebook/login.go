@@ -16,13 +16,16 @@ var (
 	ErrUnableToGetFacebookUser = errors.New("facebook: unable to get Facebook User")
 )
 
-// StateHandler checks for a temporary state cookie. If found, the state value
-// is read from it and added to the ctx. Otherwise, a temporary state cookie
-// is written and the corresponding state value is added to the ctx.
+// StateHandler checks for a state cookie. If found, the state value is read
+// and added to the ctx. Otherwise, a non-guessable value is added to the ctx
+// and to a (short-lived) state cookie issued to the requester.
 //
-// Implements OAuth 2 RFC 6749 10.12 CSRF Protection.
-func StateHandler(success ctxh.ContextHandler) ctxh.ContextHandler {
-	return oauth2Login.StateHandler(success)
+// Implements OAuth 2 RFC 6749 10.12 CSRF Protection. If you wish to issue
+// state params differently, write a ContextHandler which sets the ctx state,
+// using oauth2 WithState(ctx, state) since it is required by LoginHandler
+// and CallbackHandler.
+func StateHandler(success ctxh.ContextHandler, opts ...gologin.CookieOptions) ctxh.ContextHandler {
+	return oauth2Login.StateHandler(success, opts...)
 }
 
 // LoginHandler handles Facebook login requests by reading the state value
