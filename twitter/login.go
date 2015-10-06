@@ -20,6 +20,7 @@ var (
 // LoginHandler handles Twitter login requests by obtaining a request token and
 // redirecting to the authorization URL.
 func LoginHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctxh.ContextHandler {
+	// oauth1.LoginHandler -> oauth1.AuthRedirectHandler
 	success := oauth1Login.AuthRedirectHandler(config, failure)
 	return oauth1Login.LoginHandler(config, success, failure)
 }
@@ -29,26 +30,16 @@ func LoginHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctxh.Conte
 // authentication succeeds, handling delegates to the success handler,
 // otherwise to the failure handler.
 func CallbackHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+	// oauth1.EmptyTempHandler -> oauth1.CallbackHandler -> TwitterHandler -> success
 	success = twitterHandler(config, success, failure)
-	// set empty request token secret allowed by Twitter access token endpoint
-	return setRequestSecret(oauth1Login.CallbackHandler(config, success, failure))
+	success = oauth1Login.CallbackHandler(config, success, failure)
+	return oauth1Login.EmptyTempHandler(success)
 }
 
-// setRequestSecret sets an empty request token secret (temporary credential).
-// The Twitter access token endpoint does not require the access token request
-// to be signed so the oauth_token_secret need not be restored.
-func setRequestSecret(success ctxh.ContextHandler) ctxh.ContextHandler {
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		ctx = oauth1Login.WithRequestToken(ctx, "", "")
-		success.ServeHTTP(ctx, w, req)
-	}
-	return ctxh.ContextHandlerFunc(fn)
-}
-
-// twitterHandler is a ContextHandler that gets the OAuth1 Access Token from
+// twitterHandler is a ContextHandler that gets the OAuth1 access token from
 // the ctx and calls Twitter verify_credentials to get the corresponding User.
 // If successful, the User is added to the ctx and the success handler is
-// called. Otherwise the failure handler is called.
+// called. Otherwise, the failure handler is called.
 func twitterHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler

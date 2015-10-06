@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	stateCookie = "state-cookie"
+	stateCookieName = "state-cookie"
 )
 
 // Errors which may occur on login.
@@ -32,14 +32,14 @@ var (
 // and CallbackHandler.
 func StateHandler(success ctxh.ContextHandler, opts ...gologin.CookieOptions) ctxh.ContextHandler {
 	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		cookie, err := req.Cookie(stateCookie)
+		cookie, err := req.Cookie(stateCookieName)
 		if err == nil {
 			// add the cookie state to the ctx
 			ctx = WithState(ctx, cookie.Value)
 		} else {
 			// add Cookie with a random state
 			val := randomState()
-			http.SetCookie(w, internal.NewCookie(stateCookie, val, opts...))
+			http.SetCookie(w, internal.NewCookie(stateCookieName, val, opts...))
 			ctx = WithState(ctx, val)
 		}
 		success.ServeHTTP(ctx, w, req)

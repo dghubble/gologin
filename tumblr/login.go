@@ -3,17 +3,12 @@ package tumblr
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
 	oauth1Login "github.com/dghubble/gologin/oauth1"
 	"github.com/dghubble/oauth1"
 	"golang.org/x/net/context"
-)
-
-const (
-	tempCookieName = "tumblr-temp-secret"
 )
 
 // Tumblr login errors
@@ -24,8 +19,10 @@ var (
 // LoginHandler handles Tumblr login requests by obtaining a request token,
 // setting a temporary token secret cookie, and redirecting to the
 // authorization URL.
-func LoginHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctxh.ContextHandler {
-	success := saveRequestSecret(oauth1Login.AuthRedirectHandler(config, failure), failure)
+func LoginHandler(config *oauth1.Config, cookieConfig gologin.CookieOptions, failure ctxh.ContextHandler) ctxh.ContextHandler {
+	// oauth1.LoginHandler -> oauth1.CookieTempHander -> oauth1.AuthRedirectHandler
+	success := oauth1Login.AuthRedirectHandler(config, failure)
+	success = oauth1Login.CookieTempHandler(cookieConfig, success, failure)
 	return oauth1Login.LoginHandler(config, success, failure)
 }
 
@@ -34,65 +31,17 @@ func LoginHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctxh.Conte
 // authentication succeeds, handling delegates to the success handler,
 // otherwise to the failure handler.
 func CallbackHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
-	success = verifyUser(config, success, failure)
-	callback := oauth1Login.CallbackHandler(config, success, failure)
-	return setRequestSecret(callback, failure)
+	// oauth1.CookieTempHandler -> oauth1.CallbackHandler -> TumblrHandler -> success
+	success = tumblrHandler(config, success, failure)
+	success = oauth1Login.CallbackHandler(config, success, failure)
+	return oauth1Login.CookieTempHandler(gologin.DefaultCookieOptions, success, failure)
 }
 
-// saveRequestSecret reads the request token secret from the ctx and sets it
-// into a short lived cookie.
-func saveRequestSecret(success, failure ctxh.ContextHandler) ctxh.ContextHandler {
-	if failure == nil {
-		failure = gologin.DefaultFailureHandler
-	}
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		_, requestSecret, err := oauth1Login.RequestTokenFromContext(ctx)
-		http.SetCookie(w, newCookie(tempCookieName, requestSecret))
-		if err != nil {
-			ctx = gologin.WithError(ctx, err)
-			failure.ServeHTTP(ctx, w, req)
-			return
-		}
-		success.ServeHTTP(ctx, w, req)
-	}
-	return ctxh.ContextHandlerFunc(fn)
-}
-
-// setRequestSecret parses the temporary cookie and adds the request token
-// secret to the ctx.
-func setRequestSecret(success, failure ctxh.ContextHandler) ctxh.ContextHandler {
-	if failure == nil {
-		failure = gologin.DefaultFailureHandler
-	}
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		cookie, err := req.Cookie(tempCookieName)
-		if err != nil {
-			ctx = gologin.WithError(ctx, err)
-			failure.ServeHTTP(ctx, w, req)
-			return
-		}
-		ctx = oauth1Login.WithRequestToken(ctx, "", cookie.Value)
-		success.ServeHTTP(ctx, w, req)
-	}
-	return ctxh.ContextHandlerFunc(fn)
-}
-
-// TODO: cookie creation should be configurable
-func newCookie(name, value string) *http.Cookie {
-	cookie := &http.Cookie{
-		Name:     name,
-		Value:    value,
-		Path:     "/",
-		MaxAge:   60,
-		Secure:   false, //TODO
-		HttpOnly: true,
-	}
-	d := time.Duration(60) * time.Second
-	cookie.Expires = time.Now().Add(d)
-	return cookie
-}
-
-func verifyUser(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+// tumblrHandler is a ContextHandler that gets the OAuth1 access token from
+// the ctx and obtains the Tumblr User. If successful, the User is added to
+// the ctx and the success handler is called. Otherwise, the failure handler
+// is called.
+func tumblrHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}

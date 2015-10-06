@@ -5,8 +5,13 @@ import (
 
 	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
+	"github.com/dghubble/gologin/internal"
 	"github.com/dghubble/oauth1"
 	"golang.org/x/net/context"
+)
+
+const (
+	tempCookieName = "oauth1-temp-cookie"
 )
 
 // LoginHandler handles OAuth1 login requests by obtaining a request token and
@@ -52,6 +57,56 @@ func AuthRedirectHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctx
 			return
 		}
 		http.Redirect(w, req, authorizationURL.String(), http.StatusFound)
+	}
+	return ctxh.ContextHandlerFunc(fn)
+}
+
+// CookieTempHandler persists or retrieves the request token secret (temporary
+// credentials). If the request token can be read from the ctx (login phase),
+// the secret is set in a short-lived cookie to be read later. Otherwise
+// (callback phase) the cookie is read to retrieve the request token secret
+// and add it to the ctx.
+// If the ctx contains no request token and the request has no temp cookie,
+// the failure handler is called.
+//
+// Some OAuth1 providers (Twitter, Digits) do NOT require temp secrets to be
+// kept between the login phase and callback phase. To implement those
+// providers, use the EmptyTempHandler instead.
+func CookieTempHandler(config gologin.CookieOptions, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+	if failure == nil {
+		failure = gologin.DefaultFailureHandler
+	}
+	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+		_, requestSecret, err := RequestTokenFromContext(ctx)
+		if err == nil {
+			// add request secret  to a short-lived cookie
+			http.SetCookie(w, internal.NewCookie(tempCookieName, requestSecret, config))
+			success.ServeHTTP(ctx, w, req)
+			return
+		}
+		// read request secret from the short-lived cookie to add to ctx
+		cookie, err := req.Cookie(tempCookieName)
+		if err != nil {
+			ctx = gologin.WithError(ctx, err)
+			failure.ServeHTTP(ctx, w, req)
+			return
+		}
+		ctx = WithRequestToken(ctx, "", cookie.Value)
+		success.ServeHTTP(ctx, w, req)
+	}
+	return ctxh.ContextHandlerFunc(fn)
+}
+
+// EmptyTempHandler adds an empty request token secret to the ctx if none is
+// present to support OAuth1 providers which do not require temp secrets to
+// be kept between the login phase and callback phase.
+func EmptyTempHandler(success ctxh.ContextHandler) ctxh.ContextHandler {
+	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+		_, _, err := RequestTokenFromContext(ctx)
+		if err != nil {
+			ctx = WithRequestToken(ctx, "", "")
+		}
+		success.ServeHTTP(ctx, w, req)
 	}
 	return ctxh.ContextHandlerFunc(fn)
 }
