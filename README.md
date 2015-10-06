@@ -2,7 +2,7 @@
 # gologin [![Build Status](https://travis-ci.org/dghubble/gologin.png)](https://travis-ci.org/dghubble/gologin) [![GoDoc](http://godoc.org/github.com/dghubble/gologin?status.png)](http://godoc.org/github.com/dghubble/gologin)
 <img align="right" src="https://storage.googleapis.com/dghubble/gologin.png">
 
-Package `gologin` provides composable login handlers for Google, Github, Twitter, Digits, Facebook, Bitbucket, Tumblr, OAuth1, OAuth2, and other authentication providers.
+Package `gologin` provides chainable login handlers for Google, Github, Twitter, Digits, Facebook, Bitbucket, Tumblr, OAuth1, OAuth2, and other authentication providers.
 
 Choose an auth provider package. Register the `LoginHandler` and `CallbackHandler` for web logins and the `TokenHandler` for (mobile) token logins. Get the verified User/Account and access token from the `ctx`.
 
@@ -12,9 +12,9 @@ tldr: Chained ContextHandlers which implement the steps of auth flows to provide
 
 ### Packages
 
-* Google - [docs](http://godoc.org/github.com/dghubble/gologin/google)
+* Google - [docs](http://godoc.org/github.com/dghubble/gologin/google) &#183; [tutorial](examples/google)
 * Github - [docs](http://godoc.org/github.com/dghubble/gologin/github) &#183; [tutorial](examples/github)
-* Facebook - [docs](http://godoc.org/github.com/dghubble/gologin/facebook)
+* Facebook - [docs](http://godoc.org/github.com/dghubble/gologin/facebook) &#183; [tutorial](examples/facebook)
 * Twitter - [docs](http://godoc.org/github.com/dghubble/gologin/twitter) &#183; [tutorial](examples/twitter)
 * Digits - [docs](http://godoc.org/github.com/dghubble/gologin/digits) &#183; [tutorial](examples/digits)
 * Bitbucket [docs](http://godoc.org/github.com/dghubble/gologin/bitbucket)
@@ -27,7 +27,6 @@ tldr: Chained ContextHandlers which implement the steps of auth flows to provide
 * `LoginHandler` and `CallbackHandler` support web login flows
 * `TokenHandler` supports native mobile token login flows
 * Get the verified User/Account and access token from the `ctx`
-* Uses popular API libraries for models when available (e.g. [go-github](https://github.com/google/go-github) for the Github User)
 * OAuth 2 State Parameter CSRF protection
 
 ## Flexibility
@@ -174,7 +173,6 @@ Twitter and Digits include a `TokenHandler` which can be useful for building API
 
 * Improve examples and documentation
 * Improve test coverage
-* Facebook
 * Soundcloud
 
 ## Contributing
@@ -189,13 +187,11 @@ See the [Contributing Guide](https://gist.github.com/dghubble/be682c123727f70bcf
 
 Package `gologin` is focused on the idea that login should performed with small, chainable handlers just like any other sort of middleware. It addresses my own frustrations with [goth](https://github.com/markbates/goth) and [gomniauth](https://github.com/stretchr/gomniauth).
 
-* Authentication should be performed with chainable handlers. Its not special.
-* Session systems are orthogonal to authentication. Let users choose their session/token library.
-* Make it difficult to mess up OAuth 2 CSRF protection, but easy to customize.
-* Handlers provide flexibility. Swap OAuth2 StateHandler (cookie-based) for something else if you like.
-* Use quality existing API libraries and their models, where possible.
-* Import only what is needed for the desired authentication providers.
-* ContextHandler's are flippin awesome (see below).
+* Authentication should be performed with chainable handlers.
+* Authentication should be orthogonal to the session system. Let users choose their session/token library.
+* OAuth2 State CSRF should be included out of the box, but easy to customzie.
+* Packages should import only what is required for chosen providers. OAuth1 and OAuth2 packages are separate.
+* ContextHandler's are very flexible and chainable.
 
 ### But Why Contexts?
 
