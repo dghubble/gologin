@@ -7,30 +7,23 @@ import (
 	"github.com/dghubble/gologin"
 )
 
-// NewCookie returns a new http.Cookie with the given name, value, and optional
-// CookieOptions struct. By default, the DefaultCookieOptions are used.
+// NewCookie returns a new http.Cookie with the given value and CookieConfig
+// properties (name, max-age, etc.).
 //
 // The MaxAge field is used to determine whether an Expires field should be
 // added for Internet Explorer compatability and what its value should be.
-func NewCookie(name, value string, opts ...gologin.CookieOptions) *http.Cookie {
-	var options gologin.CookieOptions
-	if len(opts) > 0 {
-		options = opts[0]
-	} else {
-		options = gologin.DefaultCookieOptions
-	}
-
+func NewCookie(config gologin.CookieConfig, value string) *http.Cookie {
 	cookie := &http.Cookie{
-		Name:     name,
+		Name:     config.Name,
 		Value:    value,
-		Domain:   options.Domain,
-		Path:     options.Path,
-		MaxAge:   options.MaxAge,
-		HttpOnly: options.HTTPOnly,
-		Secure:   options.Secure,
+		Domain:   config.Domain,
+		Path:     config.Path,
+		MaxAge:   config.MaxAge,
+		HttpOnly: config.HTTPOnly,
+		Secure:   config.Secure,
 	}
 	// IE <9 does not understand MaxAge, set Expires if MaxAge is non-zero.
-	if expires, ok := expiresTime(options.MaxAge); ok {
+	if expires, ok := expiresTime(config.MaxAge); ok {
 		cookie.Expires = expires
 	}
 	return cookie

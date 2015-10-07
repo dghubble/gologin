@@ -10,10 +10,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-const (
-	tempCookieName = "oauth1-temp-cookie"
-)
-
 // LoginHandler handles OAuth1 login requests by obtaining a request token and
 // secret (temporary credentials) and adding it to the ctx. If successful,
 // handling delegates to the success handler, otherwise to the failure handler.
@@ -72,7 +68,7 @@ func AuthRedirectHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctx
 // Some OAuth1 providers (Twitter, Digits) do NOT require temp secrets to be
 // kept between the login phase and callback phase. To implement those
 // providers, use the EmptyTempHandler instead.
-func CookieTempHandler(config gologin.CookieOptions, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func CookieTempHandler(config gologin.CookieConfig, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}
@@ -80,12 +76,12 @@ func CookieTempHandler(config gologin.CookieOptions, success, failure ctxh.Conte
 		_, requestSecret, err := RequestTokenFromContext(ctx)
 		if err == nil {
 			// add request secret  to a short-lived cookie
-			http.SetCookie(w, internal.NewCookie(tempCookieName, requestSecret, config))
+			http.SetCookie(w, internal.NewCookie(config, requestSecret))
 			success.ServeHTTP(ctx, w, req)
 			return
 		}
 		// read request secret from the short-lived cookie to add to ctx
-		cookie, err := req.Cookie(tempCookieName)
+		cookie, err := req.Cookie(config.Name)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
 			failure.ServeHTTP(ctx, w, req)

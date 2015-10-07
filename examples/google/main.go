@@ -47,9 +47,9 @@ func New(config *Config) *http.ServeMux {
 		Scopes:       []string{"profile", "email"},
 	}
 	// state param cookies require HTTPS by default; disable for localhost development
-	stateConfig := gologin.DebugOnlyCookieOptions
-	mux.Handle("/google/login", ctxh.NewHandler(google.StateHandler(google.LoginHandler(oauth2Config, nil), stateConfig)))
-	mux.Handle("/google/callback", ctxh.NewHandler(google.StateHandler(google.CallbackHandler(oauth2Config, issueSession(), nil), stateConfig)))
+	stateConfig := gologin.DebugOnlyCookieConfig
+	mux.Handle("/google/login", ctxh.NewHandler(google.StateHandler(stateConfig, google.LoginHandler(oauth2Config, nil))))
+	mux.Handle("/google/callback", ctxh.NewHandler(google.StateHandler(stateConfig, google.CallbackHandler(oauth2Config, issueSession(), nil))))
 	return mux
 }
 

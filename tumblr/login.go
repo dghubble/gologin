@@ -19,7 +19,7 @@ var (
 // LoginHandler handles Tumblr login requests by obtaining a request token,
 // setting a temporary token secret cookie, and redirecting to the
 // authorization URL.
-func LoginHandler(config *oauth1.Config, cookieConfig gologin.CookieOptions, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func LoginHandler(config *oauth1.Config, cookieConfig gologin.CookieConfig, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	// oauth1.LoginHandler -> oauth1.CookieTempHander -> oauth1.AuthRedirectHandler
 	success := oauth1Login.AuthRedirectHandler(config, failure)
 	success = oauth1Login.CookieTempHandler(cookieConfig, success, failure)
@@ -30,11 +30,11 @@ func LoginHandler(config *oauth1.Config, cookieConfig gologin.CookieOptions, fai
 // and verifier and adding the Tubmlr access token and User to the ctx. If
 // authentication succeeds, handling delegates to the success handler,
 // otherwise to the failure handler.
-func CallbackHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func CallbackHandler(config *oauth1.Config, cookieConfig gologin.CookieConfig, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
 	// oauth1.CookieTempHandler -> oauth1.CallbackHandler -> TumblrHandler -> success
 	success = tumblrHandler(config, success, failure)
 	success = oauth1Login.CallbackHandler(config, success, failure)
-	return oauth1Login.CookieTempHandler(gologin.DefaultCookieOptions, success, failure)
+	return oauth1Login.CookieTempHandler(cookieConfig, success, failure)
 }
 
 // tumblrHandler is a ContextHandler that gets the OAuth1 access token from

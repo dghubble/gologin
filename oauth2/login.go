@@ -13,10 +13,6 @@ import (
 	"golang.org/x/oauth2"
 )
 
-const (
-	stateCookieName = "state-cookie"
-)
-
 // Errors which may occur on login.
 var (
 	ErrInvalidState = errors.New("oauth2: Invalid OAuth2 state parameter")
@@ -30,16 +26,16 @@ var (
 // state params differently, write a ContextHandler which sets the ctx state,
 // using oauth2 WithState(ctx, state) since it is required by LoginHandler
 // and CallbackHandler.
-func StateHandler(success ctxh.ContextHandler, opts ...gologin.CookieOptions) ctxh.ContextHandler {
+func StateHandler(config gologin.CookieConfig, success ctxh.ContextHandler) ctxh.ContextHandler {
 	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		cookie, err := req.Cookie(stateCookieName)
+		cookie, err := req.Cookie(config.Name)
 		if err == nil {
 			// add the cookie state to the ctx
 			ctx = WithState(ctx, cookie.Value)
 		} else {
 			// add Cookie with a random state
 			val := randomState()
-			http.SetCookie(w, internal.NewCookie(stateCookieName, val, opts...))
+			http.SetCookie(w, internal.NewCookie(config, val))
 			ctx = WithState(ctx, val)
 		}
 		success.ServeHTTP(ctx, w, req)

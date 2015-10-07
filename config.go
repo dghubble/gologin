@@ -1,7 +1,9 @@
 package gologin
 
-// CookieOptions configures http.Cookie creation.
-type CookieOptions struct {
+// CookieConfig configures http.Cookie creation.
+type CookieConfig struct {
+	// Name is the desired cookie name.
+	Name string
 	// Domain sets the cookie domain. Defaults to the host name of the responding
 	// server when left zero valued.
 	Domain string
@@ -21,19 +23,20 @@ type CookieOptions struct {
 	Secure bool
 }
 
-// DefaultCookieOptions configures http.Cookie creation for short-lived state
-// parameter cookies.
-var DefaultCookieOptions = CookieOptions{
+// DefaultCookieConfig configures short-lived temporary http.Cookie creation.
+var DefaultCookieConfig = CookieConfig{
+	Name:     "gologin-temporary-cookie",
 	Path:     "/",
 	MaxAge:   60, // 60 seconds
 	HTTPOnly: true,
 	Secure:   true, // HTTPS only
 }
 
-// DebugOnlyCookieOptions configures http.Cookie create for short-lived state
-// parameter cookies, but does NOT require cookies be sent over HTTPS! It
-// may be used for development, but should NEVER be used for production.
-var DebugOnlyCookieOptions = CookieOptions{
+// DebugOnlyCookieConfig configures creation of short-lived temporary
+// http.Cookie's which do NOT require cookies be sent over HTTPS! Use this
+// config for development only.
+var DebugOnlyCookieConfig = CookieConfig{
+	Name:     "gologin-temporary-cookie",
 	Path:     "/",
 	MaxAge:   60, // 60 seconds
 	HTTPOnly: true,

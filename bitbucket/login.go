@@ -24,8 +24,8 @@ var (
 // state params differently, write a ContextHandler which sets the ctx state,
 // using oauth2 WithState(ctx, state) since it is required by LoginHandler
 // and CallbackHandler.
-func StateHandler(success ctxh.ContextHandler, opts ...gologin.CookieOptions) ctxh.ContextHandler {
-	return oauth2Login.StateHandler(success, opts...)
+func StateHandler(config gologin.CookieConfig, success ctxh.ContextHandler) ctxh.ContextHandler {
+	return oauth2Login.StateHandler(config, success)
 }
 
 // LoginHandler handles Bitbucket login requests by reading the state value
