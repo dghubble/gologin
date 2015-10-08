@@ -44,6 +44,16 @@ See [examples](examples) for tutorials with apps you can run from the command li
 
 Read [GoDoc](https://godoc.org/github.com/dghubble/gologin)
 
+## Goals
+
+Create small, chainable handlers to correctly implement the steps of common authentication flows. Handle provider-specific validation requirements.
+
+Security is hard. Open source sharing can help. :)
+
+## Status
+
+Alpha. [Works](https://whoam.io/)! Needs more real world users to help vet. Suggestions or contributions welcome!
+
 ## Concept
 
 Package `gologin` provides `ContextHandler`'s which can be chained together to implement authorization flows and pass data (e.g. tokens, users) in a `ctx` argument.
@@ -161,8 +171,9 @@ If you wish to define your own failure `ContextHandler`, you can get the error f
 
 ### Production Tips
 
-* Always use HTTPS
-* Keep your OAuth Consumer/Client secret out of source control
+* Use HTTPS.
+* Don't put consumer/client secrets in source control.
+* Ensure the CookieConfig requires state or temp credential cookies be sent over HTTPS.
 
 ### Going Further
 
@@ -172,29 +183,32 @@ Check out the available auth provider packages. Each has handlers for the web au
 
 Twitter and Digits include a `TokenHandler` which can be useful for building APIs for mobile devices which use Login with Twitter or Login with Digits.
 
+## Motivations
+
+Package `gologin` implements authorization flow steps with chained handlers.
+
+* Authentication should be performed with chainable handlers to allow customization, swapping, or adding additional steps easily.
+* Authentication should be orthogonal to the session system. Let users choose their session/token library.
+* OAuth2 State CSRF should be included out of the box, but easy to customize.
+* Packages should import only what is required. OAuth1 and OAuth2 packages are separate.
+* ContextHandlers are flexible and useful for more than just data passing.
+
+Projects [goth](https://github.com/markbates/goth) and [gomniauth](https://github.com/stretchr/gomniauth) aim to provide a similar login solution with a different design. Check them out if you decide you don't like the ideas in `gologin`.
+
 ## Roadmap
 
-* Improve examples and documentation
 * Improve test coverage
 * Soundcloud
+* Improve examples and documentation
+* Per-Provider User types (current) vs one combined gologin User type?
 
 ## Contributing
 
-Please consider contributing! Improving documentation and examples is a good way to start. New auth providers can be implemented by composing the `oauth1` or `oauth2` ContextHandlers.
+Contributions are welcome. Improving documentation and examples is a good way to start. New auth providers can be implemented by composing the `oauth1` or `oauth2` ContextHandlers.
 
 Also, `gologin` aims to use the defacto standard API libraries for User/Account models and verify endpoints. Tumblr and Bitbucket don't seem to have good ones yet. Tiny internal API clients are used.
 
 See the [Contributing Guide](https://gist.github.com/dghubble/be682c123727f70bcfe7).
-
-## Motivations
-
-Package `gologin` is focused on the idea that login should performed with small, chainable handlers just like any other sort of middleware. It addresses my own frustrations with [goth](https://github.com/markbates/goth) and [gomniauth](https://github.com/stretchr/gomniauth).
-
-* Authentication should be performed with chainable handlers.
-* Authentication should be orthogonal to the session system. Let users choose their session/token library.
-* OAuth2 State CSRF should be included out of the box, but easy to customzie.
-* Packages should import only what is required for chosen providers. OAuth1 and OAuth2 packages are separate.
-* ContextHandlers are flexible and useful for more than just data passing.
 
 ### Why Contexts?
 
