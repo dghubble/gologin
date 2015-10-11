@@ -30,7 +30,9 @@ func TestGoogleHandler(t *testing.T) {
 	success := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		googleUser, err := UserFromContext(ctx)
 		assert.Nil(t, err)
-		assert.Equal(t, expectedUser, googleUser)
+		// assert required fields; Userinfoplus contains other raw response info
+		assert.Equal(t, expectedUser.Id, googleUser.Id)
+		assert.Equal(t, expectedUser.Id, googleUser.Id)
 		fmt.Fprintf(w, "success handler called")
 	}
 	failure := testutils.AssertFailureNotCalled(t)
