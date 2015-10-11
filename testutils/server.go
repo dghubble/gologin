@@ -1,16 +1,17 @@
 package testutils
 
 import (
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-// TestServer returns an http Client, ServeMux, and Server. The client proxies
-// requests to the server and handlers can be registered on the mux to handle
-// requests. The caller must close the test server.
+// TestServer returns a new httptest.Server, its ServeMux for adding handlers,
+// and a client which proxies requests to the server using a custom transport.
+// The caller must close the server.
 func TestServer() (*http.Client, *http.ServeMux, *httptest.Server) {
 	mux := http.NewServeMux()
 	server := httptest.NewServer(mux)
@@ -21,6 +22,17 @@ func TestServer() (*http.Client, *http.ServeMux, *httptest.Server) {
 	}}
 	client := &http.Client{Transport: transport}
 	return client, mux, server
+}
+
+// ErrorServer returns a new httptest.Server, which responds with the given
+// error message and code, and a client which proxies requests to the server
+// using a custom transport. The caller must close the server.
+func ErrorServer(t *testing.T, message string, code int) (*http.Client, *httptest.Server) {
+	client, mux, server := TestServer()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, message, code)
+	})
+	return client, server
 }
 
 // UnauthorizedTestServer returns a http.Server which always returns a 401

@@ -49,7 +49,7 @@ func TestLoginHandler(t *testing.T) {
 	loginHandler := LoginHandler(config, ctxh.ContextHandlerFunc(success), failure)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
-	ctxh.NewHandler(loginHandler).ServeHTTP(w, req)
+	loginHandler.ServeHTTP(context.Background(), w, req)
 	assert.Equal(t, "success handler called", w.Body.String())
 }
 
@@ -78,7 +78,7 @@ func TestLoginHandler_RequestTokenError(t *testing.T) {
 	loginHandler := LoginHandler(config, success, ctxh.ContextHandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
-	ctxh.NewHandler(loginHandler).ServeHTTP(w, req)
+	loginHandler.ServeHTTP(context.Background(), w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
@@ -122,7 +122,7 @@ func TestAuthRedirectHandler_MissingCtxRequestToken(t *testing.T) {
 	authRedirectHandler := AuthRedirectHandler(config, ctxh.ContextHandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
-	ctxh.NewHandler(authRedirectHandler).ServeHTTP(w, req)
+	authRedirectHandler.ServeHTTP(context.Background(), w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
@@ -207,7 +207,7 @@ func TestCallbackHandler_ParseAuthorizationCallbackError(t *testing.T) {
 	callbackHandler := CallbackHandler(config, success, ctxh.ContextHandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?oauth_verifier=", nil)
-	ctxh.NewHandler(callbackHandler).ServeHTTP(w, req)
+	callbackHandler.ServeHTTP(context.Background(), w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
@@ -228,7 +228,7 @@ func TestCallbackHandler_MissingCtxRequestSecret(t *testing.T) {
 	callbackHandler := CallbackHandler(config, success, ctxh.ContextHandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?oauth_token=any_token&oauth_verifier=any_verifier", nil)
-	ctxh.NewHandler(callbackHandler).ServeHTTP(w, req)
+	callbackHandler.ServeHTTP(context.Background(), w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 

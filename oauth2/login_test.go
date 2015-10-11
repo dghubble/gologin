@@ -30,7 +30,8 @@ func TestLoginHandler(t *testing.T) {
 	}
 	failure := testutils.AssertFailureNotCalled(t)
 
-	// LoginHandler redirects to the AuthURL, assert that:
+	// LoginHandler assert that:
+	// - redirects to the oauth2.Config AuthURL
 	// - redirect status code is 302
 	// - redirect url is the OAuth2 Config RedirectURL with the ClientID and ctx state
 	loginHandler := LoginHandler(config, failure)
@@ -58,14 +59,13 @@ func TestLoginHandler_MissingCtxState(t *testing.T) {
 	loginHandler := LoginHandler(config, ctxh.ContextHandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
-	ctxh.NewHandler(loginHandler).ServeHTTP(w, req)
+	loginHandler.ServeHTTP(context.Background(), w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
 // CallbackHandler
 
 func TestCallbackHandler(t *testing.T) {
-	expectedState := "d4e5f6"
 	jsonData := `{
        "access_token":"2YotnFZFEjr1zCsicMWpAA",
        "token_type":"example",
@@ -103,7 +103,7 @@ func TestCallbackHandler(t *testing.T) {
 	callbackHandler := CallbackHandler(config, ctxh.ContextHandlerFunc(success), failure)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?code=any_code&state=d4e5f6", nil)
-	ctx := WithState(context.Background(), expectedState)
+	ctx := WithState(context.Background(), "d4e5f6")
 	callbackHandler.ServeHTTP(ctx, w, req)
 	assert.Equal(t, "success handler called", w.Body.String())
 }
@@ -125,12 +125,12 @@ func TestCallbackHandler_ParseCallbackError(t *testing.T) {
 	callbackHandler := CallbackHandler(config, success, ctxh.ContextHandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?code=any_code", nil)
-	ctxh.NewHandler(callbackHandler).ServeHTTP(w, req)
+	callbackHandler.ServeHTTP(context.Background(), w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/?state=any_state", nil)
-	ctxh.NewHandler(callbackHandler).ServeHTTP(w, req)
+	callbackHandler.ServeHTTP(context.Background(), w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
@@ -145,13 +145,13 @@ func TestCallbackHandler_MissingCtxState(t *testing.T) {
 		fmt.Fprintf(w, "failure handler called")
 	}
 
-	// CallbackHandler cannot get the state parameter from the ctx, assert that:
+	// CallbackHandler called without state param in ctx, assert that:
 	// - failure handler is called
-	// - error about missing state ctx param is added to the failure handler ctx
+	// - error about ctx missing state is added to the failure handler ctx
 	callbackHandler := CallbackHandler(config, success, ctxh.ContextHandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?code=any_code&state=d4e5f6", nil)
-	ctxh.NewHandler(callbackHandler).ServeHTTP(w, req)
+	callbackHandler.ServeHTTP(context.Background(), w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
