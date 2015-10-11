@@ -54,7 +54,7 @@ func TestLoginHandler(t *testing.T) {
 }
 
 func TestLoginHandler_RequestTokenError(t *testing.T) {
-	server := testutils.NewErrorServer(t, "OAuth1 Service Down", http.StatusInternalServerError)
+	_, server := testutils.NewErrorServer("OAuth1 Service Down", http.StatusInternalServerError)
 	defer server.Close()
 
 	config := &oauth1.Config{
@@ -234,7 +234,7 @@ func TestCallbackHandler_MissingCtxRequestSecret(t *testing.T) {
 
 func TestCallbackHandler_AccessTokenError(t *testing.T) {
 	requestSecret := "request_secret"
-	server := testutils.NewErrorServer(t, "OAuth1 Service Down", http.StatusInternalServerError)
+	_, server := testutils.NewErrorServer("OAuth1 Service Down", http.StatusInternalServerError)
 	defer server.Close()
 
 	config := &oauth1.Config{

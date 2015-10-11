@@ -2,7 +2,6 @@ package digits
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -145,7 +144,7 @@ func TestWebHandler(t *testing.T) {
 		assert.Equal(t, testAccountEndpoint, endpoint)
 		assert.Equal(t, testAccountRequestHeader, header)
 	}
-	handler := LoginHandler(config, ctxh.ContextHandlerFunc(success), assertFailureNotCalled(t))
+	handler := LoginHandler(config, ctxh.ContextHandlerFunc(success), testutils.AssertFailureNotCalled(t))
 	ts := httptest.NewServer(ctxh.NewHandler(handler))
 	// POST OAuth Echo to server under test
 	resp, err := http.PostForm(ts.URL, url.Values{accountEndpointField: {testAccountEndpoint}, accountRequestHeaderField: {testAccountRequestHeader}})
@@ -155,15 +154,15 @@ func TestWebHandler(t *testing.T) {
 	}
 }
 
-func TestWebHandler_unauthorized(t *testing.T) {
-	proxyClient, server := testutils.UnauthorizedTestServer()
+func TestWebHandler_ErrorGettingRequestToken(t *testing.T) {
+	proxyClient, server := testutils.NewErrorServer("OAuth1 Service Down", http.StatusInternalServerError)
 	defer server.Close()
 
 	config := &Config{
 		ConsumerKey: testConsumerKey,
 		Client:      proxyClient,
 	}
-	handler := LoginHandler(config, assertSuccessNotCalled(t), nil)
+	handler := LoginHandler(config, testutils.AssertSuccessNotCalled(t), nil)
 	ts := httptest.NewServer(ctxh.NewHandler(handler))
 	// assert that error occurs indicating the Digits Account cound not be confirmed
 	resp, _ := http.PostForm(ts.URL, url.Values{accountEndpointField: {testAccountEndpoint}, accountRequestHeaderField: {testAccountRequestHeader}})
@@ -172,7 +171,7 @@ func TestWebHandler_unauthorized(t *testing.T) {
 
 func TestWebHandler_NonPost(t *testing.T) {
 	config := &Config{}
-	handler := LoginHandler(config, assertSuccessNotCalled(t), nil)
+	handler := LoginHandler(config, testutils.AssertSuccessNotCalled(t), nil)
 	ts := httptest.NewServer(ctxh.NewHandler(handler))
 	resp, err := http.Get(ts.URL)
 	assert.Nil(t, err)
@@ -187,7 +186,7 @@ func TestWebHandler_InvalidFields(t *testing.T) {
 	config := &Config{
 		ConsumerKey: testConsumerKey,
 	}
-	handler := LoginHandler(config, assertSuccessNotCalled(t), nil)
+	handler := LoginHandler(config, testutils.AssertSuccessNotCalled(t), nil)
 	ts := httptest.NewServer(ctxh.NewHandler(handler))
 
 	// assert errors occur for different missing/incorrect POST fields
@@ -209,15 +208,6 @@ func TestWebHandler_InvalidFields(t *testing.T) {
 	testutils.AssertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
 }
 
-func newDigitsTestServer(jsonData string) (*http.Client, *http.ServeMux, *httptest.Server) {
-	client, mux, server := testutils.TestServer()
-	mux.HandleFunc("/1.1/sdk/account.json", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, jsonData)
-	})
-	return client, mux, server
-}
-
 func checkSuccess(t *testing.T) ctxh.ContextHandler {
 	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		account, err := AccountFromContext(ctx)
@@ -230,20 +220,6 @@ func checkSuccess(t *testing.T) ctxh.ContextHandler {
 		assert.Nil(t, err)
 		assert.Equal(t, testAccountEndpoint, endpoint)
 		assert.Equal(t, testAccountRequestHeader, header)
-	}
-	return ctxh.ContextHandlerFunc(fn)
-}
-
-func assertSuccessNotCalled(t *testing.T) ctxh.ContextHandler {
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		assert.Fail(t, "unexpected call to success ContextHandler")
-	}
-	return ctxh.ContextHandlerFunc(fn)
-}
-
-func assertFailureNotCalled(t *testing.T) ctxh.ContextHandler {
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		assert.Fail(t, "unexpected call to failure ContextHandler")
 	}
 	return ctxh.ContextHandlerFunc(fn)
 }

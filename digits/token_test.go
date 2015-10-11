@@ -47,7 +47,7 @@ func TestTokenHandler(t *testing.T) {
 		assert.Equal(t, testDigitsToken, accessToken)
 		assert.Equal(t, testDigitsSecret, accessSecret)
 	}
-	handler := TokenHandler(config, ctxh.ContextHandlerFunc(success), assertFailureNotCalled(t))
+	handler := TokenHandler(config, ctxh.ContextHandlerFunc(success), testutils.AssertFailureNotCalled(t))
 	ts := httptest.NewServer(ctxh.NewHandlerWithContext(ctx, handler))
 	// POST Digits access token to server under test
 	resp, err := http.PostForm(ts.URL, url.Values{accessTokenField: {testDigitsToken}, accessTokenSecretField: {testDigitsSecret}})
@@ -57,14 +57,14 @@ func TestTokenHandler(t *testing.T) {
 	}
 }
 
-func TestTokenHandler_unauthorized(t *testing.T) {
-	proxyClient, server := testutils.UnauthorizedTestServer()
+func TestTokenHandler_ErrorVerifyingToken(t *testing.T) {
+	proxyClient, server := testutils.NewErrorServer("Digits Account Endpoint Down", http.StatusInternalServerError)
 	defer server.Close()
 	// oauth1 Client will use the proxy client's base Transport
 	ctx := context.WithValue(context.Background(), oauth1.HTTPClient, proxyClient)
 
 	config := &oauth1.Config{}
-	handler := TokenHandler(config, assertSuccessNotCalled(t), nil)
+	handler := TokenHandler(config, testutils.AssertSuccessNotCalled(t), nil)
 	ts := httptest.NewServer(ctxh.NewHandlerWithContext(ctx, handler))
 	// assert that error occurs indicating the Digits Account could not be confirmed
 	resp, _ := http.PostForm(ts.URL, url.Values{accessTokenField: {testDigitsToken}, accessTokenSecretField: {testDigitsSecret}})
@@ -73,7 +73,7 @@ func TestTokenHandler_unauthorized(t *testing.T) {
 
 func TestTokenHandler_NonPost(t *testing.T) {
 	config := &oauth1.Config{}
-	handler := TokenHandler(config, assertSuccessNotCalled(t), nil)
+	handler := TokenHandler(config, testutils.AssertSuccessNotCalled(t), nil)
 	ts := httptest.NewServer(ctxh.NewHandler(handler))
 	resp, err := http.Get(ts.URL)
 	assert.Nil(t, err)
@@ -86,7 +86,7 @@ func TestTokenHandler_NonPost(t *testing.T) {
 
 func TestTokenHandler_InvalidFields(t *testing.T) {
 	config := &oauth1.Config{}
-	handler := TokenHandler(config, assertSuccessNotCalled(t), nil)
+	handler := TokenHandler(config, testutils.AssertSuccessNotCalled(t), nil)
 	ts := httptest.NewServer(ctxh.NewHandler(handler))
 
 	// asert errors occur for different missing POST fields

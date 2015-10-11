@@ -178,7 +178,7 @@ func TestCallbackHandler_StateMismatch(t *testing.T) {
 }
 
 func TestCallbackHandler_ExchangeError(t *testing.T) {
-	server := testutils.NewErrorServer(t, "OAuth2 Service Down", http.StatusInternalServerError)
+	_, server := testutils.NewErrorServer("OAuth2 Service Down", http.StatusInternalServerError)
 	defer server.Close()
 
 	config := &oauth2.Config{

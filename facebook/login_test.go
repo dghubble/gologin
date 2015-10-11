@@ -68,7 +68,7 @@ func TestFacebookHandler_MissingCtxToken(t *testing.T) {
 }
 
 func TestFacebookHandler_ErrorGettingUser(t *testing.T) {
-	proxyClient, server := testutils.ErrorServer(t, "Facebook Service Down", http.StatusInternalServerError)
+	proxyClient, server := testutils.NewErrorServer("Facebook Service Down", http.StatusInternalServerError)
 	defer server.Close()
 	// oauth2 Client will use the proxy client's base Transport
 	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, proxyClient)
