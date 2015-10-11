@@ -8,7 +8,7 @@ Choose an auth provider package. Register the `LoginHandler` and `CallbackHandle
 
 See [examples](examples) for tutorials with apps you can run from the command line. Visit [whoam.io](https://whoam.io/) to see a live site running on some Kubernetes clusters.
 
-**tldr**: Handlers which implement the steps of standard auth flows to provide access tokens and associated User/Account structs.
+**tldr**: Handlers which implement the steps of standard authentication flows to provide access tokens and associated User/Account structs.
 
 ### Packages
 
@@ -169,11 +169,11 @@ You may use `oauth2.WithState(context.Context, state string)` for this. [docs](h
 
 If you wish to define your own failure `ContextHandler`, you can get the error from the `ctx` using `gologin.ErrorFromContext(ctx)`.
 
-### Production Tips
+### Production Requirements
 
 * Use HTTPS.
-* Don't put consumer/client secrets in source control.
-* Ensure the CookieConfig requires state or temp credential cookies be sent over HTTPS.
+* Never put consumer/client secrets in source control.
+* Ensure the CookieConfig requires state or temp credential cookies be sent over HTTPS-only.
 
 ### Going Further
 
@@ -198,6 +198,7 @@ Projects [goth](https://github.com/markbates/goth) and [gomniauth](https://githu
 ## Roadmap
 
 * Improve test coverage
+* [dex](https://github.com/coreos/dex)
 * Soundcloud
 * Improve examples and documentation
 * Per-Provider User types (current) vs one combined gologin User type?

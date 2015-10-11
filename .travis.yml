@@ -18,6 +18,7 @@ install:
   - go get -v ./tumblr
   - go get -v ./bitbucket
   - go get -v ./google
+  - go get -v ./facebook
 script:
   - go test -v ./oauth1
   - go test -v ./oauth2
@@ -27,5 +28,6 @@ script:
   - go test -v ./tumblr
   - go test -v ./bitbucket
   - go test -v ./google
+  - go test -v ./facebook
   - go vet ./...
   - golint ./...
