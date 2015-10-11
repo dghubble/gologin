@@ -1,4 +1,4 @@
-package facebook
+package google
 
 import (
 	"fmt"
@@ -13,12 +13,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
+	google "google.golang.org/api/oauth2/v2"
 )
 
-func TestFacebookHandler(t *testing.T) {
-	jsonData := `{"id": "54638001", "name": "Ivy Crimson"}`
-	expectedUser := &User{ID: "54638001", Name: "Ivy Crimson"}
-	proxyClient, server := newFacebookTestServer(jsonData)
+func TestGoogleHandler(t *testing.T) {
+	jsonData := `{"id": "900913", "name": "Ben Bitdiddle"}`
+	expectedUser := &google.Userinfoplus{Id: "900913", Name: "Ben Bitdiddle"}
+	proxyClient, server := newGoogleTestServer(jsonData)
 	defer server.Close()
 	// oauth2 Client will use the proxy client's base Transport
 	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, proxyClient)
@@ -27,26 +28,26 @@ func TestFacebookHandler(t *testing.T) {
 
 	config := &oauth2.Config{}
 	success := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		facebookUser, err := UserFromContext(ctx)
+		googleUser, err := UserFromContext(ctx)
 		assert.Nil(t, err)
-		assert.Equal(t, expectedUser, facebookUser)
+		assert.Equal(t, expectedUser, googleUser)
 		fmt.Fprintf(w, "success handler called")
 	}
 	failure := testutils.AssertFailureNotCalled(t)
 
-	// FacebookHandler assert that:
-	// - Token is read from the ctx and passed to the facebook API
-	// - facebook User is obtained from the facebook API
+	// GoogleHandler assert that:
+	// - Token is read from the ctx and passed to the Google API
+	// - google Userinfoplus is obtained from the Google API
 	// - success handler is called
-	// - facebook User is added to the ctx of the success handler
-	facebookHandler := facebookHandler(config, ctxh.ContextHandlerFunc(success), failure)
+	// - google Userinfoplus is added to the ctx of the success handler
+	googleHandler := googleHandler(config, ctxh.ContextHandlerFunc(success), failure)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
-	facebookHandler.ServeHTTP(ctx, w, req)
+	googleHandler.ServeHTTP(ctx, w, req)
 	assert.Equal(t, "success handler called", w.Body.String())
 }
 
-func TestFacebookHandler_MissingCtxToken(t *testing.T) {
+func TestGoogleHandler_MissingCtxToken(t *testing.T) {
 	config := &oauth2.Config{}
 	success := testutils.AssertSuccessNotCalled(t)
 	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
@@ -57,18 +58,18 @@ func TestFacebookHandler_MissingCtxToken(t *testing.T) {
 		fmt.Fprintf(w, "failure handler called")
 	}
 
-	// FacebookHandler called without Token in ctx, assert that:
+	// GoogleHandler called without Token in ctx, assert that:
 	// - failure handler is called
 	// - error about ctx missing token is added to the failure handler ctx
-	facebookHandler := facebookHandler(config, success, ctxh.ContextHandlerFunc(failure))
+	googleHandler := googleHandler(config, success, ctxh.ContextHandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
-	facebookHandler.ServeHTTP(context.Background(), w, req)
+	googleHandler.ServeHTTP(context.Background(), w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
-func TestFacebookHandler_ErrorGettingUser(t *testing.T) {
-	proxyClient, server := testutils.NewErrorServer("Facebook Service Down", http.StatusInternalServerError)
+func TestGoogleHandler_ErrorGettingUser(t *testing.T) {
+	proxyClient, server := testutils.NewErrorServer("Google Service Down", http.StatusInternalServerError)
 	defer server.Close()
 	// oauth2 Client will use the proxy client's base Transport
 	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, proxyClient)
@@ -80,27 +81,24 @@ func TestFacebookHandler_ErrorGettingUser(t *testing.T) {
 	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
-			assert.Equal(t, ErrUnableToGetFacebookUser, err)
+			assert.Equal(t, ErrUnableToGetGoogleUser, err)
 		}
 		fmt.Fprintf(w, "failure handler called")
 	}
 
-	// FacebookHandler cannot get Facebook User, assert that:
+	// GoogleHandler cannot get Google User, assert that:
 	// - failure handler is called
-	// - error cannot get Facebook User added to the failure handler ctx
-	facebookHandler := facebookHandler(config, success, ctxh.ContextHandlerFunc(failure))
+	// - error cannot get Google User added to the failure handler ctx
+	googleHandler := googleHandler(config, success, ctxh.ContextHandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
-	facebookHandler.ServeHTTP(ctx, w, req)
+	googleHandler.ServeHTTP(ctx, w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
 func TestValidateResponse(t *testing.T) {
-	validUser := &User{ID: "54638001", Name: "Ivy Crimson"}
-	validResponse := &http.Response{StatusCode: 200}
-	invalidResponse := &http.Response{StatusCode: 500}
-	assert.Equal(t, nil, validateResponse(validUser, validResponse, nil))
-	assert.Equal(t, ErrUnableToGetFacebookUser, validateResponse(validUser, validResponse, fmt.Errorf("Server error")))
-	assert.Equal(t, ErrUnableToGetFacebookUser, validateResponse(validUser, invalidResponse, nil))
-	assert.Equal(t, ErrUnableToGetFacebookUser, validateResponse(&User{}, validResponse, nil))
+	assert.Equal(t, nil, validateResponse(&google.Userinfoplus{Id: "123"}, nil))
+	assert.Equal(t, ErrUnableToGetGoogleUser, validateResponse(nil, fmt.Errorf("Server error")))
+	assert.Equal(t, ErrCannotValidateGoogleUser, validateResponse(nil, nil))
+	assert.Equal(t, ErrCannotValidateGoogleUser, validateResponse(&google.Userinfoplus{Name: "Ben"}, nil))
 }
