@@ -1,5 +1,5 @@
 
-# gologin [![Build Status](https://travis-ci.org/dghubble/gologin.png)](https://travis-ci.org/dghubble/gologin) [![GoDoc](http://godoc.org/github.com/dghubble/gologin?status.png)](http://godoc.org/github.com/dghubble/gologin)
+# gologin [![Build Status](https://travis-ci.org/dghubble/gologin.svg?branch=master)](https://travis-ci.org/dghubble/gologin) [![GoDoc](https://godoc.org/github.com/dghubble/gologin?status.png)](https://godoc.org/github.com/dghubble/gologin)
 <img align="right" src="https://storage.googleapis.com/dghubble/gologin.png">
 
 Package `gologin` provides chainable login handlers for Google, Github, Twitter, Digits, Facebook, Bitbucket, Tumblr, OAuth1, OAuth2, and other authentication providers.
@@ -33,8 +33,8 @@ See [examples](examples) for tutorials with apps you can run from the command li
 
 * Handlers work with any mux accepting an `http.Handler`
 * Does not attempt to be your session system or token system.
-* Configurable OAuth 2 state parameter handling (in-progress)
-* Configurable OAuth 1 request secret handling (in-progress)
+* Configurable OAuth 2 state parameter handling
+* Configurable OAuth 1 request secret handling
 
 ## Install
 
@@ -47,12 +47,6 @@ Read [GoDoc](https://godoc.org/github.com/dghubble/gologin)
 ## Goals
 
 Create small, chainable handlers to correctly implement the steps of common authentication flows. Handle provider-specific validation requirements.
-
-Security is hard. Open source sharing can help. :)
-
-## Status
-
-Alpha. [Works](https://whoam.io/)! Needs more real world users to help vet. Suggestions or contributions welcome!
 
 ## Concept
 
@@ -198,9 +192,7 @@ Projects [goth](https://github.com/markbates/goth) and [gomniauth](https://githu
 ## Roadmap
 
 * Improve test coverage
-* [dex](https://github.com/coreos/dex)
-* Soundcloud
-* Improve examples and documentation
+* OTP Handlers
 * Per-Provider User types (current) vs one combined gologin User type?
 
 ## Contributing
