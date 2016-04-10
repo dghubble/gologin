@@ -1,10 +1,9 @@
 language: go
 go:
-  - 1.5
+  - 1.5.3
   - 1.6
   - tip
 before_install:
-  - go get golang.org/x/tools/cmd/vet
   - go get github.com/golang/lint/golint
   - go get github.com/stretchr/testify
 install:
