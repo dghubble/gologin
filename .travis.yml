@@ -1,30 +1,9 @@
 language: go
 go:
-  - 1.5.3
   - 1.6
   - tip
-before_install:
-  - go get github.com/golang/lint/golint
-  - go get github.com/stretchr/testify
 install:
-  - go get -v ./oauth1
-  - go get -v ./oauth2
-  - go get -v ./twitter
-  - go get -v ./digits
-  - go get -v ./github
-  - go get -v ./tumblr
-  - go get -v ./bitbucket
-  - go get -v ./google
-  - go get -v ./facebook
+  - go get github.com/golang/lint/golint
+  - go get -v -t ./...
 script:
-  - go test -v ./oauth1
-  - go test -v ./oauth2
-  - go test -v ./twitter
-  - go test -v ./digits
-  - go test -v ./github
-  - go test -v ./tumblr
-  - go test -v ./bitbucket
-  - go test -v ./google
-  - go test -v ./facebook
-  - go vet ./...
-  - golint ./...
+  - ./test
