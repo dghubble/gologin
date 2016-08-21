@@ -4,7 +4,7 @@ PKGS=$(go list ./... | grep -v /examples)
 FORMATTABLE="$(find . -maxdepth 1 -type d)"
 LINTABLE=$(go list ./...)
 
-go test $PKGS -cover
+go test -v $PKGS -cover
 go vet $PKGS
 
 echo "Checking gofmt..."
