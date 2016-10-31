@@ -54,7 +54,7 @@ func TestLoginHandler(t *testing.T) {
 }
 
 func TestLoginHandler_RequestTokenError(t *testing.T) {
-	_, server := testutils.NewErrorServer("OAuth1 Service Down", http.StatusInternalServerError)
+	_, server := testutils.NewErrorServer("OAuth1 Server Error", http.StatusInternalServerError)
 	defer server.Close()
 
 	config := &oauth1.Config{
@@ -67,14 +67,14 @@ func TestLoginHandler_RequestTokenError(t *testing.T) {
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			// first validation in OAuth1 impl failed
-			assert.Equal(t, "oauth1: oauth_callback_confirmed was not true", err.Error())
+			assert.Equal(t, "oauth1: Server returned status 500", err.Error())
 		}
 		fmt.Fprintf(w, "failure handler called")
 	}
 
 	// LoginHandler cannot get the OAuth1 request token, assert that:
 	// - failure handler is called
-	// - error is added to the ctx of the failure handler
+	// - error about StatusInternalServerError is added to the ctx
 	loginHandler := LoginHandler(config, success, ctxh.ContextHandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
@@ -234,7 +234,7 @@ func TestCallbackHandler_MissingCtxRequestSecret(t *testing.T) {
 
 func TestCallbackHandler_AccessTokenError(t *testing.T) {
 	requestSecret := "request_secret"
-	_, server := testutils.NewErrorServer("OAuth1 Service Down", http.StatusInternalServerError)
+	_, server := testutils.NewErrorServer("OAuth1 Server Error", http.StatusInternalServerError)
 	defer server.Close()
 
 	config := &oauth1.Config{
@@ -246,14 +246,15 @@ func TestCallbackHandler_AccessTokenError(t *testing.T) {
 	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
-			assert.Equal(t, "oauth1: Response missing oauth_token or oauth_token_secret", err.Error())
+			// first validation in OAuth1 impl failed
+			assert.Equal(t, "oauth1: Server returned status 500", err.Error())
 		}
 		fmt.Fprintf(w, "failure handler called")
 	}
 
 	// CallbackHandler cannot get the OAuth1 access token, assert that:
 	// - failure handler is called
-	// - error about missing oauth_token and oauth_token_secret is added to the ctx
+	// - error about StatusInternalServerError is added to the ctx
 	callbackHandler := CallbackHandler(config, success, ctxh.ContextHandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?oauth_token=any_token&oauth_verifier=any_verifier", nil)
