@@ -104,7 +104,7 @@ func CallbackHandler(config *oauth2.Config, success, failure ctxh.ContextHandler
 func randomState() string {
 	b := make([]byte, 32)
 	rand.Read(b)
-	return base64.URLEncoding.EncodeToString(b)
+	return base64.RawURLEncoding.EncodeToString(b)
 }
 
 // parseCallback parses the "code" and "state" parameters from the http.Request
