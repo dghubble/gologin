@@ -3,6 +3,9 @@ go:
   - 1.6
   - 1.7
   - tip
+matrix:
+  allow_failures:
+    - go: tip
 install:
   - go get github.com/golang/lint/golint
   - go get -v -t ./...
