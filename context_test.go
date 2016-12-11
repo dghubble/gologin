@@ -1,11 +1,11 @@
 package gologin
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 func TestContextError(t *testing.T) {

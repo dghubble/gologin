@@ -1,10 +1,10 @@
 package oauth2
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
 

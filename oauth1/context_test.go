@@ -1,10 +1,10 @@
 package oauth1
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 func TestContextRequestToken(t *testing.T) {

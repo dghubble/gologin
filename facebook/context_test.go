@@ -1,10 +1,10 @@
 package facebook
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 func TestContextUser(t *testing.T) {
