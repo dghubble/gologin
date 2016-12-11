@@ -1,17 +1,16 @@
 package oauth2
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
 	"github.com/dghubble/gologin/testutils"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
 
@@ -38,14 +37,15 @@ func TestLoginHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 	ctx := WithState(context.Background(), expectedState)
-	loginHandler.ServeHTTP(ctx, w, req)
+	loginHandler.ServeHTTP(w, req.WithContext(ctx))
 	assert.Equal(t, http.StatusFound, w.Code)
 	assert.Equal(t, expectedRedirect, w.HeaderMap.Get("Location"))
 }
 
 func TestLoginHandler_MissingCtxState(t *testing.T) {
 	config := &oauth2.Config{}
-	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	failure := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			assert.Equal(t, "oauth2: Context missing state value", err.Error())
@@ -56,10 +56,10 @@ func TestLoginHandler_MissingCtxState(t *testing.T) {
 	// LoginHandler cannot get the state from the ctx, assert that:
 	// - failure handler is called
 	// - error about missing state is added to the ctx
-	loginHandler := LoginHandler(config, ctxh.ContextHandlerFunc(failure))
+	loginHandler := LoginHandler(config, http.HandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
-	loginHandler.ServeHTTP(context.Background(), w, req)
+	loginHandler.ServeHTTP(w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
@@ -85,7 +85,8 @@ func TestCallbackHandler(t *testing.T) {
 			TokenURL: server.URL,
 		},
 	}
-	success := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	success := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		token, err := TokenFromContext(ctx)
 		assert.Equal(t, expectedToken.AccessToken, token.AccessToken)
 		assert.Equal(t, expectedToken.TokenType, token.Type())
@@ -100,18 +101,19 @@ func TestCallbackHandler(t *testing.T) {
 	// - success handler is called
 	// - access token added to the ctx of the success handler
 	// - failure handler is not called
-	callbackHandler := CallbackHandler(config, ctxh.ContextHandlerFunc(success), failure)
+	callbackHandler := CallbackHandler(config, http.HandlerFunc(success), failure)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?code=any_code&state=d4e5f6", nil)
 	ctx := WithState(context.Background(), "d4e5f6")
-	callbackHandler.ServeHTTP(ctx, w, req)
+	callbackHandler.ServeHTTP(w, req.WithContext(ctx))
 	assert.Equal(t, "success handler called", w.Body.String())
 }
 
 func TestCallbackHandler_ParseCallbackError(t *testing.T) {
 	config := &oauth2.Config{}
 	success := testutils.AssertSuccessNotCalled(t)
-	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	failure := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			assert.Equal(t, "oauth2: Request missing code or state", err.Error())
@@ -122,22 +124,23 @@ func TestCallbackHandler_ParseCallbackError(t *testing.T) {
 	// CallbackHandler called without code or state, assert that:
 	// - failure handler is called
 	// - error about missing code or state is added to the ctx
-	callbackHandler := CallbackHandler(config, success, ctxh.ContextHandlerFunc(failure))
+	callbackHandler := CallbackHandler(config, success, http.HandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?code=any_code", nil)
-	callbackHandler.ServeHTTP(context.Background(), w, req)
+	callbackHandler.ServeHTTP(w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/?state=any_state", nil)
-	callbackHandler.ServeHTTP(context.Background(), w, req)
+	callbackHandler.ServeHTTP(w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
 func TestCallbackHandler_MissingCtxState(t *testing.T) {
 	config := &oauth2.Config{}
 	success := testutils.AssertSuccessNotCalled(t)
-	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	failure := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			assert.Equal(t, "oauth2: Context missing state value", err.Error())
@@ -148,17 +151,18 @@ func TestCallbackHandler_MissingCtxState(t *testing.T) {
 	// CallbackHandler called without state param in ctx, assert that:
 	// - failure handler is called
 	// - error about ctx missing state is added to the failure handler ctx
-	callbackHandler := CallbackHandler(config, success, ctxh.ContextHandlerFunc(failure))
+	callbackHandler := CallbackHandler(config, success, http.HandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?code=any_code&state=d4e5f6", nil)
-	callbackHandler.ServeHTTP(context.Background(), w, req)
+	callbackHandler.ServeHTTP(w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
 func TestCallbackHandler_StateMismatch(t *testing.T) {
 	config := &oauth2.Config{}
 	success := testutils.AssertSuccessNotCalled(t)
-	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	failure := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			assert.Equal(t, "oauth2: Invalid OAuth2 state parameter", err.Error())
@@ -169,11 +173,11 @@ func TestCallbackHandler_StateMismatch(t *testing.T) {
 	// CallbackHandler ctx state does not match state param, assert that:
 	// - failure handler is called
 	// - error about invalid state param is added to the failure handler ctx
-	callbackHandler := CallbackHandler(config, success, ctxh.ContextHandlerFunc(failure))
+	callbackHandler := CallbackHandler(config, success, http.HandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?code=any_code&state=d4e5f6", nil)
 	ctx := WithState(context.Background(), "differentState")
-	callbackHandler.ServeHTTP(ctx, w, req)
+	callbackHandler.ServeHTTP(w, req.WithContext(ctx))
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
@@ -187,7 +191,8 @@ func TestCallbackHandler_ExchangeError(t *testing.T) {
 		},
 	}
 	success := testutils.AssertSuccessNotCalled(t)
-	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	failure := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			// error from golang.org/x/oauth2 config.Exchange as provider is down
@@ -199,10 +204,10 @@ func TestCallbackHandler_ExchangeError(t *testing.T) {
 	// CallbackHandler cannot exchange for an Access Token, assert that:
 	// - failure handler is called
 	// - error with the reason the exchange failed is added to the ctx
-	callbackHandler := CallbackHandler(config, success, ctxh.ContextHandlerFunc(failure))
+	callbackHandler := CallbackHandler(config, success, http.HandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?code=any_code&state=d4e5f6", nil)
 	ctx := WithState(context.Background(), "d4e5f6")
-	callbackHandler.ServeHTTP(ctx, w, req)
+	callbackHandler.ServeHTTP(w, req.WithContext(ctx))
 	assert.Equal(t, "failure handler called", w.Body.String())
 }

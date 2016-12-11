@@ -1,9 +1,9 @@
 package google
 
 import (
+	"context"
 	"fmt"
 
-	"golang.org/x/net/context"
 	google "google.golang.org/api/oauth2/v2"
 )
 

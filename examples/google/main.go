@@ -8,11 +8,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
 	"github.com/dghubble/gologin/google"
 	"github.com/dghubble/sessions"
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	googleOAuth2 "golang.org/x/oauth2/google"
 )
@@ -48,14 +46,15 @@ func New(config *Config) *http.ServeMux {
 	}
 	// state param cookies require HTTPS by default; disable for localhost development
 	stateConfig := gologin.DebugOnlyCookieConfig
-	mux.Handle("/google/login", ctxh.NewHandler(google.StateHandler(stateConfig, google.LoginHandler(oauth2Config, nil))))
-	mux.Handle("/google/callback", ctxh.NewHandler(google.StateHandler(stateConfig, google.CallbackHandler(oauth2Config, issueSession(), nil))))
+	mux.Handle("/google/login", google.StateHandler(stateConfig, google.LoginHandler(oauth2Config, nil)))
+	mux.Handle("/google/callback", google.StateHandler(stateConfig, google.CallbackHandler(oauth2Config, issueSession(), nil)))
 	return mux
 }
 
 // issueSession issues a cookie session after successful Google login
-func issueSession() ctxh.ContextHandler {
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+func issueSession() http.Handler {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		googleUser, err := google.UserFromContext(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -67,7 +66,7 @@ func issueSession() ctxh.ContextHandler {
 		session.Save(w)
 		http.Redirect(w, req, "/profile", http.StatusFound)
 	}
-	return ctxh.ContextHandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
 // welcomeHandler shows a welcome message and login button.
