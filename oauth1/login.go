@@ -3,11 +3,9 @@ package oauth1
 import (
 	"net/http"
 
-	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
 	"github.com/dghubble/gologin/internal"
 	"github.com/dghubble/oauth1"
-	"golang.org/x/net/context"
 )
 
 // LoginHandler handles OAuth1 login requests by obtaining a request token and
@@ -16,45 +14,47 @@ import (
 //
 // Typically, the success handler is an AuthRedirectHandler or a handler which
 // stores the request token secret.
-func LoginHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func LoginHandler(config *oauth1.Config, success, failure http.Handler) http.Handler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		requestToken, requestSecret, err := config.RequestToken()
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
-			failure.ServeHTTP(ctx, w, req)
+			failure.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
 		ctx = WithRequestToken(ctx, requestToken, requestSecret)
-		success.ServeHTTP(ctx, w, req)
+		success.ServeHTTP(w, req.WithContext(ctx))
 	}
-	return ctxh.ContextHandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
 // AuthRedirectHandler reads the request token from the ctx and redirects
 // to the authorization URL.
-func AuthRedirectHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func AuthRedirectHandler(config *oauth1.Config, failure http.Handler) http.Handler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		requestToken, _, err := RequestTokenFromContext(ctx)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
-			failure.ServeHTTP(ctx, w, req)
+			failure.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
 		authorizationURL, err := config.AuthorizationURL(requestToken)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
-			failure.ServeHTTP(ctx, w, req)
+			failure.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
 		http.Redirect(w, req, authorizationURL.String(), http.StatusFound)
 	}
-	return ctxh.ContextHandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
 // CookieTempHandler persists or retrieves the request token secret (temporary
@@ -68,57 +68,60 @@ func AuthRedirectHandler(config *oauth1.Config, failure ctxh.ContextHandler) ctx
 // Some OAuth1 providers (Twitter, Digits) do NOT require temp secrets to be
 // kept between the login phase and callback phase. To implement those
 // providers, use the EmptyTempHandler instead.
-func CookieTempHandler(config gologin.CookieConfig, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func CookieTempHandler(config gologin.CookieConfig, success, failure http.Handler) http.Handler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		_, requestSecret, err := RequestTokenFromContext(ctx)
 		if err == nil {
 			// add request secret  to a short-lived cookie
 			http.SetCookie(w, internal.NewCookie(config, requestSecret))
-			success.ServeHTTP(ctx, w, req)
+			success.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
 		// read request secret from the short-lived cookie to add to ctx
 		cookie, err := req.Cookie(config.Name)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
-			failure.ServeHTTP(ctx, w, req)
+			failure.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
 		ctx = WithRequestToken(ctx, "", cookie.Value)
-		success.ServeHTTP(ctx, w, req)
+		success.ServeHTTP(w, req.WithContext(ctx))
 	}
-	return ctxh.ContextHandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
 // EmptyTempHandler adds an empty request token secret to the ctx if none is
 // present to support OAuth1 providers which do not require temp secrets to
 // be kept between the login phase and callback phase.
-func EmptyTempHandler(success ctxh.ContextHandler) ctxh.ContextHandler {
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+func EmptyTempHandler(success http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		_, _, err := RequestTokenFromContext(ctx)
 		if err != nil {
 			ctx = WithRequestToken(ctx, "", "")
 		}
-		success.ServeHTTP(ctx, w, req)
+		success.ServeHTTP(w, req.WithContext(ctx))
 	}
-	return ctxh.ContextHandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
 // CallbackHandler handles OAuth1 callback requests by parsing the oauth token
 // and verifier, reading the request token secret from the ctx, then obtaining
 // an access token and adding it to the ctx.
-func CallbackHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func CallbackHandler(config *oauth1.Config, success, failure http.Handler) http.Handler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		requestToken, verifier, err := oauth1.ParseAuthorizationCallback(req)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
-			failure.ServeHTTP(ctx, w, req)
+			failure.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
 
@@ -126,18 +129,18 @@ func CallbackHandler(config *oauth1.Config, success, failure ctxh.ContextHandler
 		_, requestSecret, err := RequestTokenFromContext(ctx)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
-			failure.ServeHTTP(ctx, w, req)
+			failure.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
 
 		accessToken, accessSecret, err := config.AccessToken(requestToken, requestSecret, verifier)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
-			failure.ServeHTTP(ctx, w, req)
+			failure.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
 		ctx = WithAccessToken(ctx, accessToken, accessSecret)
-		success.ServeHTTP(ctx, w, req)
+		success.ServeHTTP(w, req.WithContext(ctx))
 	}
-	return ctxh.ContextHandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }

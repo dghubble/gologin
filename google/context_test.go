@@ -1,10 +1,10 @@
 package google
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 	google "google.golang.org/api/oauth2/v2"
 )
 

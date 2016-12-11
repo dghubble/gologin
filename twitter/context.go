@@ -1,10 +1,10 @@
 package twitter
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/dghubble/go-twitter/twitter"
-	"golang.org/x/net/context"
 )
 
 // unexported key type prevents collisions
