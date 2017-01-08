@@ -7,11 +7,9 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/dghubble/ctxh"
 	"github.com/dghubble/go-digits/digits"
 	"github.com/dghubble/gologin/testutils"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 const (
@@ -132,7 +130,8 @@ func TestWebHandler(t *testing.T) {
 		ConsumerKey: testConsumerKey,
 		Client:      proxyClient,
 	}
-	success := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	success := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		account, err := AccountFromContext(ctx)
 		assert.Nil(t, err)
 		assert.Equal(t, testDigitsToken, account.AccessToken.Token)
@@ -144,8 +143,8 @@ func TestWebHandler(t *testing.T) {
 		assert.Equal(t, testAccountEndpoint, endpoint)
 		assert.Equal(t, testAccountRequestHeader, header)
 	}
-	handler := LoginHandler(config, ctxh.ContextHandlerFunc(success), testutils.AssertFailureNotCalled(t))
-	ts := httptest.NewServer(ctxh.NewHandler(handler))
+	handler := LoginHandler(config, http.HandlerFunc(success), testutils.AssertFailureNotCalled(t))
+	ts := httptest.NewServer(handler)
 	// POST OAuth Echo to server under test
 	resp, err := http.PostForm(ts.URL, url.Values{accountEndpointField: {testAccountEndpoint}, accountRequestHeaderField: {testAccountRequestHeader}})
 	assert.Nil(t, err)
@@ -163,7 +162,7 @@ func TestWebHandler_ErrorGettingRequestToken(t *testing.T) {
 		Client:      proxyClient,
 	}
 	handler := LoginHandler(config, testutils.AssertSuccessNotCalled(t), nil)
-	ts := httptest.NewServer(ctxh.NewHandler(handler))
+	ts := httptest.NewServer(handler)
 	// assert that error occurs indicating the Digits Account cound not be confirmed
 	resp, _ := http.PostForm(ts.URL, url.Values{accountEndpointField: {testAccountEndpoint}, accountRequestHeaderField: {testAccountRequestHeader}})
 	testutils.AssertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
@@ -172,7 +171,7 @@ func TestWebHandler_ErrorGettingRequestToken(t *testing.T) {
 func TestWebHandler_NonPost(t *testing.T) {
 	config := &Config{}
 	handler := LoginHandler(config, testutils.AssertSuccessNotCalled(t), nil)
-	ts := httptest.NewServer(ctxh.NewHandler(handler))
+	ts := httptest.NewServer(handler)
 	resp, err := http.Get(ts.URL)
 	assert.Nil(t, err)
 	// assert that default (nil) failure handler returns a 405 Method Not Allowed
@@ -187,7 +186,7 @@ func TestWebHandler_InvalidFields(t *testing.T) {
 		ConsumerKey: testConsumerKey,
 	}
 	handler := LoginHandler(config, testutils.AssertSuccessNotCalled(t), nil)
-	ts := httptest.NewServer(ctxh.NewHandler(handler))
+	ts := httptest.NewServer(handler)
 
 	// assert errors occur for different missing/incorrect POST fields
 	resp, err := http.PostForm(ts.URL, url.Values{"wrongKeyName": {testAccountEndpoint}, accountRequestHeaderField: {testAccountRequestHeader}})
@@ -208,8 +207,9 @@ func TestWebHandler_InvalidFields(t *testing.T) {
 	testutils.AssertBodyString(t, resp.Body, ErrUnableToGetDigitsAccount.Error()+"\n")
 }
 
-func checkSuccess(t *testing.T) ctxh.ContextHandler {
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+func checkSuccess(t *testing.T) http.Handler {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		account, err := AccountFromContext(ctx)
 		assert.Nil(t, err)
 		assert.Equal(t, testDigitsToken, account.AccessToken.Token)
@@ -221,5 +221,5 @@ func checkSuccess(t *testing.T) ctxh.ContextHandler {
 		assert.Equal(t, testAccountEndpoint, endpoint)
 		assert.Equal(t, testAccountRequestHeader, header)
 	}
-	return ctxh.ContextHandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }

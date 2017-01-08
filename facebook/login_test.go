@@ -1,17 +1,16 @@
 package facebook
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
 	oauth2Login "github.com/dghubble/gologin/oauth2"
 	"github.com/dghubble/gologin/testutils"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
 
@@ -26,7 +25,8 @@ func TestFacebookHandler(t *testing.T) {
 	ctx = oauth2Login.WithToken(ctx, anyToken)
 
 	config := &oauth2.Config{}
-	success := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	success := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		facebookUser, err := UserFromContext(ctx)
 		assert.Nil(t, err)
 		assert.Equal(t, expectedUser, facebookUser)
@@ -39,17 +39,18 @@ func TestFacebookHandler(t *testing.T) {
 	// - facebook User is obtained from the facebook API
 	// - success handler is called
 	// - facebook User is added to the ctx of the success handler
-	facebookHandler := facebookHandler(config, ctxh.ContextHandlerFunc(success), failure)
+	facebookHandler := facebookHandler(config, http.HandlerFunc(success), failure)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
-	facebookHandler.ServeHTTP(ctx, w, req)
+	facebookHandler.ServeHTTP(w, req.WithContext(ctx))
 	assert.Equal(t, "success handler called", w.Body.String())
 }
 
 func TestFacebookHandler_MissingCtxToken(t *testing.T) {
 	config := &oauth2.Config{}
 	success := testutils.AssertSuccessNotCalled(t)
-	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	failure := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			assert.Equal(t, "oauth2: Context missing Token", err.Error())
@@ -60,10 +61,10 @@ func TestFacebookHandler_MissingCtxToken(t *testing.T) {
 	// FacebookHandler called without Token in ctx, assert that:
 	// - failure handler is called
 	// - error about ctx missing token is added to the failure handler ctx
-	facebookHandler := facebookHandler(config, success, ctxh.ContextHandlerFunc(failure))
+	facebookHandler := facebookHandler(config, success, http.HandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
-	facebookHandler.ServeHTTP(context.Background(), w, req)
+	facebookHandler.ServeHTTP(w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
@@ -77,7 +78,8 @@ func TestFacebookHandler_ErrorGettingUser(t *testing.T) {
 
 	config := &oauth2.Config{}
 	success := testutils.AssertSuccessNotCalled(t)
-	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	failure := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			assert.Equal(t, ErrUnableToGetFacebookUser, err)
@@ -88,10 +90,10 @@ func TestFacebookHandler_ErrorGettingUser(t *testing.T) {
 	// FacebookHandler cannot get Facebook User, assert that:
 	// - failure handler is called
 	// - error cannot get Facebook User added to the failure handler ctx
-	facebookHandler := facebookHandler(config, success, ctxh.ContextHandlerFunc(failure))
+	facebookHandler := facebookHandler(config, success, http.HandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
-	facebookHandler.ServeHTTP(ctx, w, req)
+	facebookHandler.ServeHTTP(w, req.WithContext(ctx))
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 

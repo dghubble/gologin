@@ -9,10 +9,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin/digits"
 	"github.com/dghubble/sessions"
-	"golang.org/x/net/context"
 )
 
 const (
@@ -39,13 +37,14 @@ func New(c *Config) *http.ServeMux {
 	config := &digits.Config{
 		ConsumerKey: c.DigitsConsumerKey,
 	}
-	mux.Handle("/login/digits", ctxh.NewHandler(digits.LoginHandler(config, issueSession(), nil)))
+	mux.Handle("/login/digits", digits.LoginHandler(config, issueSession(), nil))
 	return mux
 }
 
 // issueSession issues a cookie session after successful Digits login
-func issueSession() ctxh.ContextHandler {
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+func issueSession() http.Handler {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		digitsAccount, err := digits.AccountFromContext(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -57,7 +56,7 @@ func issueSession() ctxh.ContextHandler {
 		session.Save(w)
 		http.Redirect(w, req, "/profile", http.StatusFound)
 	}
-	return ctxh.ContextHandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
 // welcomeHandler shows a welcome message and login button.

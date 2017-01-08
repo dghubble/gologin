@@ -1,11 +1,11 @@
 package github
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-github/github"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 func TestContextUser(t *testing.T) {

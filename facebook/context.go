@@ -1,9 +1,8 @@
 package facebook
 
 import (
+	"context"
 	"fmt"
-
-	"golang.org/x/net/context"
 )
 
 // unexported key type prevents collisions

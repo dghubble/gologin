@@ -8,11 +8,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
 	"github.com/dghubble/gologin/github"
 	"github.com/dghubble/sessions"
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	githubOAuth2 "golang.org/x/oauth2/github"
 )
@@ -47,14 +45,15 @@ func New(config *Config) *http.ServeMux {
 	}
 	// state param cookies require HTTPS by default; disable for localhost development
 	stateConfig := gologin.DebugOnlyCookieConfig
-	mux.Handle("/github/login", ctxh.NewHandler(github.StateHandler(stateConfig, github.LoginHandler(oauth2Config, nil))))
-	mux.Handle("/github/callback", ctxh.NewHandler(github.StateHandler(stateConfig, github.CallbackHandler(oauth2Config, issueSession(), nil))))
+	mux.Handle("/github/login", github.StateHandler(stateConfig, github.LoginHandler(oauth2Config, nil)))
+	mux.Handle("/github/callback", github.StateHandler(stateConfig, github.CallbackHandler(oauth2Config, issueSession(), nil)))
 	return mux
 }
 
 // issueSession issues a cookie session after successful Github login
-func issueSession() ctxh.ContextHandler {
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+func issueSession() http.Handler {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		githubUser, err := github.UserFromContext(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -66,7 +65,7 @@ func issueSession() ctxh.ContextHandler {
 		session.Save(w)
 		http.Redirect(w, req, "/profile", http.StatusFound)
 	}
-	return ctxh.ContextHandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
 // welcomeHandler shows a welcome message and login button.

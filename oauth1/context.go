@@ -1,9 +1,11 @@
 package oauth1
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 
-	"golang.org/x/net/context"
+	olib "github.com/dghubble/oauth1"
 )
 
 // unexported key type prevents collisions
@@ -50,4 +52,12 @@ func AccessTokenFromContext(ctx context.Context) (string, string, error) {
 		return "", "", fmt.Errorf("oauth1: Context missing access token or secret")
 	}
 	return accessToken, accessSecret, nil
+}
+
+// WithHTTPClient returns a handler that sets the provided HttpClient in the request context.
+func WithHTTPClient(client *http.Client, next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		next.ServeHTTP(w, req.WithContext(context.WithValue(req.Context(), olib.HTTPClient, client)))
+	}
+	return http.HandlerFunc(fn)
 }
