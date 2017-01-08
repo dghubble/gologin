@@ -10,18 +10,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// AssertSuccessNotCalled is a success ContextHandler that fails if called.
+// AssertSuccessNotCalled is a success http.Handler that fails if called.
 func AssertSuccessNotCalled(t *testing.T) http.Handler {
 	fn := func(w http.ResponseWriter, req *http.Request) {
-		assert.Fail(t, "unexpected call to success ContextHandler")
+		assert.Fail(t, "unexpected call to success Handler")
 	}
 	return http.HandlerFunc(fn)
 }
 
-// AssertFailureNotCalled is a failure ContextHandler that fails if called.
+// AssertFailureNotCalled is a failure http.Handler that fails if called.
 func AssertFailureNotCalled(t *testing.T) http.Handler {
 	fn := func(w http.ResponseWriter, req *http.Request) {
-		assert.Fail(t, "unexpected call to failure ContextHandler")
+		assert.Fail(t, "unexpected call to failure Handler")
 	}
 	return http.HandlerFunc(fn)
 }

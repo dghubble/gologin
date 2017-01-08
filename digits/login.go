@@ -67,7 +67,7 @@ func LoginHandler(config *Config, success, failure http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-// getAccountViaEcho is a ContextHandler that gets the Digits Echo endpoint and
+// getAccountViaEcho is a http.Handler that gets the Digits Echo endpoint and
 // OAuth header from the ctx and calls the endpoint to get the corresponding
 // Digits Account. If successful, the Account is added to the ctx and the
 // success handler is called. Otherwise, the failure handler is called.

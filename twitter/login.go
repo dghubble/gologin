@@ -34,7 +34,7 @@ func CallbackHandler(config *oauth1.Config, success, failure http.Handler) http.
 	return oauth1Login.EmptyTempHandler(success)
 }
 
-// twitterHandler is a ContextHandler that gets the OAuth1 access token from
+// twitterHandler is a http.Handler that gets the OAuth1 access token from
 // the ctx and calls Twitter verify_credentials to get the corresponding User.
 // If successful, the User is added to the ctx and the success handler is
 // called. Otherwise, the failure handler is called.

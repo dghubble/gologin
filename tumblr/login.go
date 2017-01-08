@@ -35,7 +35,7 @@ func CallbackHandler(config *oauth1.Config, cookieConfig gologin.CookieConfig, s
 	return oauth1Login.CookieTempHandler(cookieConfig, success, failure)
 }
 
-// tumblrHandler is a ContextHandler that gets the OAuth1 access token from
+// tumblrHandler is a http.Handler that gets the OAuth1 access token from
 // the ctx and obtains the Tumblr User. If successful, the User is added to
 // the ctx and the success handler is called. Otherwise, the failure handler
 // is called.

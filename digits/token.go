@@ -52,7 +52,7 @@ func TokenHandler(config *oauth1.Config, success, failure http.Handler) http.Han
 	return http.HandlerFunc(fn)
 }
 
-// digitsHandler is a ContextHandler that gets the OAuth1 access token from the
+// digitsHandler is a http.Handler that gets the OAuth1 access token from the
 // ctx and calls the Digits accounts endpoint to get the corresponding Account.
 // If successful, the Account is added to the ctx and the success handler is
 // called. Otherwise, the failure handler is called.

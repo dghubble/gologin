@@ -34,6 +34,6 @@ Here's what the flow looks like.
 
 1. Clicking the "Login with Twitter" link to the login handler redirects the user to the Twitter OAuth1 Authorization page to obtain a permission grant.
 2. The callback handler receives the OAuth1 callback and obtains an access token.
-3. The success `ContextHandler` is called with a `Context` which contains the Twitter access token and verified Twitter User struct.
+3. The success `http.Handler` is called with a `Context` which contains the Twitter access token and verified Twitter User struct.
 4. In this example, that User is read and used to issue a signed cookie session.
 
