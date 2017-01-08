@@ -36,6 +36,6 @@ Here's what the flow looks like.
 
 1. The "Login with Facebook" link to the login handler directs the user to the Facebook OAuth2 Auth URL to obtain a permission grant.
 2. The redirection URI (callback handler) receives the OAuth2 callback, verifies the state parameter, and obtains a Token.
-3. The success `ContextHandler` is called with a `Context` which contains the Facebook Token and verified Facebook User struct.
+3. The success `http.Handler` is called with a `Context` which contains the Facebook Token and verified Facebook User struct.
 4. In this example, that User is read and used to issue a signed cookie session.
 

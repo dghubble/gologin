@@ -21,7 +21,7 @@ var (
 // and to a (short-lived) state cookie issued to the requester.
 //
 // Implements OAuth 2 RFC 6749 10.12 CSRF Protection. If you wish to issue
-// state params differently, write a ContextHandler which sets the ctx state,
+// state params differently, write a http.Handler which sets the ctx state,
 // using oauth2 WithState(ctx, state) since it is required by LoginHandler
 // and CallbackHandler.
 func StateHandler(config gologin.CookieConfig, success http.Handler) http.Handler {

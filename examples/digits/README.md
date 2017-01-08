@@ -42,7 +42,7 @@ Here is what the web login flow looks like (showing a mobile browser).
 
 2. User enters a phone number and receives an SMS confirmation number to enter. The page receives OAuth Echo fields and POSTs them to the Go server.
 
-3. The Echo fields are validated, used to obtain the Digits `Account`, and provided to the specified success `ContextHandler`.
+3. The Echo fields are validated, used to obtain the Digits `Account`, and provided to the specified success `http.Handler`.
 
 4. In this example, that account is read and used to issue the user a signed cookie session.
 

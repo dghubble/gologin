@@ -21,7 +21,7 @@ var (
 // and to a (short-lived) state cookie issued to the requester.
 //
 // Implements OAuth 2 RFC 6749 10.12 CSRF Protection. If you wish to issue
-// state params differently, write a ContextHandler which sets the ctx state,
+// state params differently, write a http.Handler which sets the ctx state,
 // using oauth2 WithState(ctx, state) since it is required by LoginHandler
 // and CallbackHandler.
 func StateHandler(config gologin.CookieConfig, success http.Handler) http.Handler {
@@ -42,7 +42,7 @@ func CallbackHandler(config *oauth2.Config, success, failure http.Handler) http.
 	return oauth2Login.CallbackHandler(config, success, failure)
 }
 
-// googleHandler is a ContextHandler that gets the OAuth2 Token from the ctx
+// googleHandler is a http.Handler that gets the OAuth2 Token from the ctx
 // to get the corresponding Google Userinfoplus. If successful, the user info
 // is added to the ctx and the success handler is called. Otherwise, the
 // failure handler is called.
