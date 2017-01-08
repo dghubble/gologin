@@ -17,7 +17,7 @@ Package `gologin` provides Go handlers for the Google OAuth2 Authorization flow 
 
 [main.go](main.go) shows an example web app which uses `gologin` to issue a client-side cookie session. For simplicity, no data is persisted.
 
-Visit [Google Developer Console](https://console.developers.google.com/project) under Project, APIs & Auth, Credentials to get your OAuth2 client credentials. Add `http://localhost:8080/google/callback` as a valid OAuth2 Redirect URL.
+Visit [Google Developer Console](https://console.cloud.google.com) under Project, APIs, Credentials to get your OAuth2 client credentials. Add `http://localhost:8080/google/callback` as a valid OAuth2 Redirect URL.
 
 <img src="https://storage.googleapis.com/dghubble/google-valid-callback.png">
 

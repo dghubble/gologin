@@ -8,11 +8,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
 	"github.com/dghubble/gologin/facebook"
 	"github.com/dghubble/sessions"
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	facebookOAuth2 "golang.org/x/oauth2/facebook"
 )
@@ -47,14 +45,15 @@ func New(config *Config) *http.ServeMux {
 	}
 	// state param cookies require HTTPS by default; disable for localhost development
 	stateConfig := gologin.DebugOnlyCookieConfig
-	mux.Handle("/facebook/login", ctxh.NewHandler(facebook.StateHandler(stateConfig, facebook.LoginHandler(oauth2Config, nil))))
-	mux.Handle("/facebook/callback", ctxh.NewHandler(facebook.StateHandler(stateConfig, facebook.CallbackHandler(oauth2Config, issueSession(), nil))))
+	mux.Handle("/facebook/login", facebook.StateHandler(stateConfig, facebook.LoginHandler(oauth2Config, nil)))
+	mux.Handle("/facebook/callback", facebook.StateHandler(stateConfig, facebook.CallbackHandler(oauth2Config, issueSession(), nil)))
 	return mux
 }
 
 // issueSession issues a cookie session after successful Facebook login
-func issueSession() ctxh.ContextHandler {
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+func issueSession() http.Handler {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		facebookUser, err := facebook.UserFromContext(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -66,7 +65,7 @@ func issueSession() ctxh.ContextHandler {
 		session.Save(w)
 		http.Redirect(w, req, "/profile", http.StatusFound)
 	}
-	return ctxh.ContextHandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
 // welcomeHandler shows a welcome message and login button.
