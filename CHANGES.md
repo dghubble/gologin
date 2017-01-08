@@ -3,6 +3,22 @@
 
 Notable changes between releases.
 
+## v2.0.0 (TBD)
+
+* Support for Go 1.7+ standard `context`
+* Change `gologin` handlers to be standard `http.Handler`'s
+* Drop requirement for `ctxh.NewHandler` wrapper
+* Drop dependency on `github.com/dghubble/ctxh` shim
+
+### Migration
+
+* Use Go 1.7+ or use the `gologin` v1.0.0 tag
+* Update `golang.org/x/net/context` imports to `context`
+* Change any `ctxh.ContextHandler` to a `http.Handler`. The `ctx` is passed via the request so the argument is no longer needed.
+* Remove any `ctxh.NewHandler(...)` wrap. `gologin` handlers are now standard `http.Handler`'s, conversion is no longer required.
+* Use `req.Context()` to obtain the request context within handlers.
+* See updated [examples](examples)
+
 ## v1.0.1 (2016-10-31)
 
 * Use base64.RawURLEncoding for StateHandler's state (#14)
