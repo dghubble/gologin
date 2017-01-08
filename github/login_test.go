@@ -20,6 +20,7 @@ func TestGithubHandler(t *testing.T) {
 	expectedUser := &github.User{ID: github.Int(917408), Name: github.String("Alyssa Hacker")}
 	proxyClient, server := newGithubTestServer(jsonData)
 	defer server.Close()
+
 	// oauth2 Client will use the proxy client's base Transport
 	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, proxyClient)
 	anyToken := &oauth2.Token{AccessToken: "any-token"}
