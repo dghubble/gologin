@@ -3,6 +3,29 @@
 
 Notable changes between releases.
 
+## v2.0.0 (TBD)
+
+* Support for Go 1.7+ standard `context`
+* Change `gologin` handlers to be standard `http.Handler`'s
+* Drop requirement for `ctxh.NewHandler` wrapper
+* Drop dependency on `github.com/dghubble/ctxh` shim
+
+### Migration
+
+* Use Go 1.7+ or use the `gologin` v1.0.0 tag
+* Update `golang.org/x/net/context` imports to `context`
+* Change any `ctxh.ContextHandler` to a `http.Handler`. The `ctx` is passed via the request so the argument is no longer needed.
+* Remove any `ctxh.NewHandler(...)` wrap. `gologin` handlers are now standard `http.Handler`'s, conversion is no longer required.
+* Use `req.Context()` to obtain the request context within handlers.
+* See updated [examples](examples)
+
+## v1.0.0 (2016-03-09)
+
+* Official release using the `ContextHandler`
+* Support for all OAuth1 and Oauth2 providers
+* Convenience handlers for Google, Github, Facebook, Bitbucket, Twitter, Digits, and Tumblr
+* Token login handlers for Twitter and Digits
+
 ## v0.1.0 (2015-10-09)
 
 * Initial proof of concept
