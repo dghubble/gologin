@@ -12,7 +12,6 @@ Notable changes between releases.
 
 ### Migration
 
-* Use Go 1.7+ or use the `gologin` v1.0.0 tag
 * Update `golang.org/x/net/context` imports to `context`
 * Change any `ctxh.ContextHandler` to a `http.Handler`. The `ctx` is passed via the request so the argument is no longer needed.
 * Remove any `ctxh.NewHandler(...)` wrap. `gologin` handlers are now standard `http.Handler`'s, conversion is no longer required.

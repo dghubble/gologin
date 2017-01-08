@@ -8,7 +8,7 @@ Choose a subpackage. Register the `LoginHandler` and `CallbackHandler` for web l
 
 See [examples](examples) for tutorials with apps you can run from the command line. Visit [whoam.io](https://whoam.io/) to see a live site running on some Kubernetes clusters.
 
-**Announcement**: Go 1.7+ includes `context` in the standard library. With `gologin` `v2.0.0`, handlers have been updated to standard `http.Handler`'s. See [migration](#migration-from-v100). Those requiring Go 1.6 support should use the v1.0.0 tag.
+**Announcement**: Go 1.7+ includes `context` in the standard library. With `gologin` `v2.0.0`, handlers have been updated to standard `http.Handler`'s. See [migration](#migration-from-v100). Those requiring Go 1.6 support should use the latest `v1.0.*` tag.
 
 ### Packages
 
