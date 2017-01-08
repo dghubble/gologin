@@ -9,12 +9,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin/twitter"
 	"github.com/dghubble/oauth1"
 	twitterOAuth1 "github.com/dghubble/oauth1/twitter"
 	"github.com/dghubble/sessions"
-	"golang.org/x/net/context"
 )
 
 const (
@@ -45,14 +43,15 @@ func New(config *Config) *http.ServeMux {
 		CallbackURL:    "http://localhost:8080/twitter/callback",
 		Endpoint:       twitterOAuth1.AuthorizeEndpoint,
 	}
-	mux.Handle("/twitter/login", ctxh.NewHandler(twitter.LoginHandler(oauth1Config, nil)))
-	mux.Handle("/twitter/callback", ctxh.NewHandler(twitter.CallbackHandler(oauth1Config, issueSession(), nil)))
+	mux.Handle("/twitter/login", twitter.LoginHandler(oauth1Config, nil))
+	mux.Handle("/twitter/callback", twitter.CallbackHandler(oauth1Config, issueSession(), nil))
 	return mux
 }
 
 // issueSession issues a cookie session after successful Twitter login
-func issueSession() ctxh.ContextHandler {
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+func issueSession() http.Handler {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		twitterUser, err := twitter.UserFromContext(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -64,7 +63,7 @@ func issueSession() ctxh.ContextHandler {
 		session.Save(w)
 		http.Redirect(w, req, "/profile", http.StatusFound)
 	}
-	return ctxh.ContextHandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
 // welcomeHandler shows a welcome message and login button.
