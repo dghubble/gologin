@@ -1,15 +1,22 @@
 #!/usr/bin/env bash
- set -e
+set -e
 
 PKGS=$(go list ./... | grep -v /examples)
-FORMATTABLE="$(find . -maxdepth 1 -type d)"
+FMT_DIRS=$(ls -d */)
+FMT_FILES=$(find . -maxdepth 1 | grep "\.go")
 LINTABLE=$(go list ./...)
 
 go test $PKGS -cover
 go vet $PKGS
 
 echo "Checking gofmt..."
-fmtRes=$(gofmt -l $FORMATTABLE)
+fmtRes=$(gofmt -l $FMT_DIRS)
+if [ -n "${fmtRes}" ]; then
+  echo -e "gofmt checking failed:\n${fmtRes}"
+  exit 2
+fi
+
+fmtRes=$(gofmt -l $FMT_FILES)
 if [ -n "${fmtRes}" ]; then
   echo -e "gofmt checking failed:\n${fmtRes}"
   exit 2
