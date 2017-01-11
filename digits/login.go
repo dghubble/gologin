@@ -6,11 +6,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/dghubble/ctxh"
 	"github.com/dghubble/go-digits/digits"
 	"github.com/dghubble/gologin"
 	"github.com/dghubble/sling"
-	"golang.org/x/net/context"
 )
 
 const (
@@ -41,15 +39,16 @@ type Config struct {
 // validates the echo, and calls the endpoint to get the corresponding Digits
 // Account. If successful, the Digits Account is added to the ctx and the
 // success handler is called. Otherwise, the failure handler is called.
-func LoginHandler(config *Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func LoginHandler(config *Config, success, failure http.Handler) http.Handler {
 	success = getAccountViaEcho(config, success, failure)
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		if req.Method != "POST" {
 			ctx = gologin.WithError(ctx, fmt.Errorf("Method not allowed"))
-			failure.ServeHTTP(ctx, w, req)
+			failure.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
 		req.ParseForm()
@@ -59,20 +58,20 @@ func LoginHandler(config *Config, success, failure ctxh.ContextHandler) ctxh.Con
 		err := validateEcho(accountEndpoint, accountRequestHeader, config.ConsumerKey)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
-			failure.ServeHTTP(ctx, w, req)
+			failure.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
 		ctx = WithEcho(ctx, accountEndpoint, accountRequestHeader)
-		success.ServeHTTP(ctx, w, req)
+		success.ServeHTTP(w, req.WithContext(ctx))
 	}
-	return ctxh.ContextHandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
-// getAccountViaEcho is a ContextHandler that gets the Digits Echo endpoint and
+// getAccountViaEcho is a http.Handler that gets the Digits Echo endpoint and
 // OAuth header from the ctx and calls the endpoint to get the corresponding
 // Digits Account. If successful, the Account is added to the ctx and the
 // success handler is called. Otherwise, the failure handler is called.
-func getAccountViaEcho(config *Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func getAccountViaEcho(config *Config, success, failure http.Handler) http.Handler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}
@@ -80,11 +79,12 @@ func getAccountViaEcho(config *Config, success, failure ctxh.ContextHandler) ctx
 	if client == nil {
 		client = http.DefaultClient
 	}
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		endpoint, header, err := EchoFromContext(ctx)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
-			failure.ServeHTTP(ctx, w, req)
+			failure.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
 		// fetch the Digits Account
@@ -93,13 +93,13 @@ func getAccountViaEcho(config *Config, success, failure ctxh.ContextHandler) ctx
 		err = validateResponse(account, resp, err)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
-			failure.ServeHTTP(ctx, w, req)
+			failure.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
 		ctx = WithAccount(ctx, account)
-		success.ServeHTTP(ctx, w, req)
+		success.ServeHTTP(w, req.WithContext(ctx))
 	}
-	return ctxh.ContextHandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
 // validateEcho checks that the Digits OAuth Echo arguments are valid. If the

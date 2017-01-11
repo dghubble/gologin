@@ -1,13 +1,13 @@
 package gologin
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 func TestDefaultFailureHandler(t *testing.T) {
@@ -16,7 +16,7 @@ func TestDefaultFailureHandler(t *testing.T) {
 	req, err := http.NewRequest("GET", "/", nil)
 	assert.Nil(t, err)
 	w := httptest.NewRecorder()
-	DefaultFailureHandler.ServeHTTP(ctx, w, req)
+	DefaultFailureHandler.ServeHTTP(w, req.WithContext(ctx))
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	// assert that error message was passed through
 	assert.Equal(t, expectedError.Error()+"\n", w.Body.String())

@@ -1,10 +1,10 @@
 package github
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/google/go-github/github"
-	"golang.org/x/net/context"
 )
 
 // unexported key type prevents collisions

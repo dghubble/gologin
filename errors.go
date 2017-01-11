@@ -2,16 +2,14 @@ package gologin
 
 import (
 	"net/http"
-
-	"github.com/dghubble/ctxh"
-	"golang.org/x/net/context"
 )
 
 // DefaultFailureHandler responds with a 400 status code and message parsed
 // from the ctx.
-var DefaultFailureHandler = ctxh.ContextHandlerFunc(failureHandler)
+var DefaultFailureHandler = http.HandlerFunc(failureHandler)
 
-func failureHandler(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+func failureHandler(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	err := ErrorFromContext(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

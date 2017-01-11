@@ -4,11 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
 	oauth1Login "github.com/dghubble/gologin/oauth1"
 	"github.com/dghubble/oauth1"
-	"golang.org/x/net/context"
 )
 
 // Tumblr login errors
@@ -19,7 +17,7 @@ var (
 // LoginHandler handles Tumblr login requests by obtaining a request token,
 // setting a temporary token secret cookie, and redirecting to the
 // authorization URL.
-func LoginHandler(config *oauth1.Config, cookieConfig gologin.CookieConfig, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func LoginHandler(config *oauth1.Config, cookieConfig gologin.CookieConfig, failure http.Handler) http.Handler {
 	// oauth1.LoginHandler -> oauth1.CookieTempHander -> oauth1.AuthRedirectHandler
 	success := oauth1Login.AuthRedirectHandler(config, failure)
 	success = oauth1Login.CookieTempHandler(cookieConfig, success, failure)
@@ -30,26 +28,27 @@ func LoginHandler(config *oauth1.Config, cookieConfig gologin.CookieConfig, fail
 // and verifier and adding the Tubmlr access token and User to the ctx. If
 // authentication succeeds, handling delegates to the success handler,
 // otherwise to the failure handler.
-func CallbackHandler(config *oauth1.Config, cookieConfig gologin.CookieConfig, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func CallbackHandler(config *oauth1.Config, cookieConfig gologin.CookieConfig, success, failure http.Handler) http.Handler {
 	// oauth1.CookieTempHandler -> oauth1.CallbackHandler -> TumblrHandler -> success
 	success = tumblrHandler(config, success, failure)
 	success = oauth1Login.CallbackHandler(config, success, failure)
 	return oauth1Login.CookieTempHandler(cookieConfig, success, failure)
 }
 
-// tumblrHandler is a ContextHandler that gets the OAuth1 access token from
+// tumblrHandler is a http.Handler that gets the OAuth1 access token from
 // the ctx and obtains the Tumblr User. If successful, the User is added to
 // the ctx and the success handler is called. Otherwise, the failure handler
 // is called.
-func tumblrHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) ctxh.ContextHandler {
+func tumblrHandler(config *oauth1.Config, success, failure http.Handler) http.Handler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		accessToken, accessSecret, err := oauth1Login.AccessTokenFromContext(ctx)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
-			failure.ServeHTTP(ctx, w, req)
+			failure.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
 		httpClient := config.Client(ctx, oauth1.NewToken(accessToken, accessSecret))
@@ -58,13 +57,13 @@ func tumblrHandler(config *oauth1.Config, success, failure ctxh.ContextHandler) 
 		err = validateResponse(user, resp, err)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
-			failure.ServeHTTP(ctx, w, req)
+			failure.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
 		ctx = WithUser(ctx, user)
-		success.ServeHTTP(ctx, w, req)
+		success.ServeHTTP(w, req.WithContext(ctx))
 	}
-	return ctxh.ContextHandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
 // validateResponse returns an error if the given Tumblr User, raw

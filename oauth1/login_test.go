@@ -1,18 +1,17 @@
 package oauth1
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
-	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
 	"github.com/dghubble/gologin/testutils"
 	"github.com/dghubble/oauth1"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 // LoginHandler
@@ -32,7 +31,8 @@ func TestLoginHandler(t *testing.T) {
 			RequestTokenURL: server.URL,
 		},
 	}
-	success := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	success := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		requestToken, requestSecret, err := RequestTokenFromContext(ctx)
 		assert.Equal(t, expectedToken, requestToken)
 		assert.Equal(t, expectedSecret, requestSecret)
@@ -46,10 +46,10 @@ func TestLoginHandler(t *testing.T) {
 	// - request token added to the ctx of the success handler
 	// - request secret added to the ctx of the success handler
 	// - failure handler is not called
-	loginHandler := LoginHandler(config, ctxh.ContextHandlerFunc(success), failure)
+	loginHandler := LoginHandler(config, http.HandlerFunc(success), failure)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
-	loginHandler.ServeHTTP(context.Background(), w, req)
+	loginHandler.ServeHTTP(w, req)
 	assert.Equal(t, "success handler called", w.Body.String())
 }
 
@@ -63,7 +63,8 @@ func TestLoginHandler_RequestTokenError(t *testing.T) {
 		},
 	}
 	success := testutils.AssertSuccessNotCalled(t)
-	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	failure := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			// first validation in OAuth1 impl failed
@@ -75,10 +76,10 @@ func TestLoginHandler_RequestTokenError(t *testing.T) {
 	// LoginHandler cannot get the OAuth1 request token, assert that:
 	// - failure handler is called
 	// - error about StatusInternalServerError is added to the ctx
-	loginHandler := LoginHandler(config, success, ctxh.ContextHandlerFunc(failure))
+	loginHandler := LoginHandler(config, success, http.HandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
-	loginHandler.ServeHTTP(context.Background(), w, req)
+	loginHandler.ServeHTTP(w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
@@ -101,14 +102,15 @@ func TestAuthRedirectHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 	ctx := WithRequestToken(context.Background(), requestToken, "")
-	authRedirectHandler.ServeHTTP(ctx, w, req)
+	authRedirectHandler.ServeHTTP(w, req.WithContext(ctx))
 	assert.Equal(t, http.StatusFound, w.Code)
 	assert.Equal(t, expectedRedirect, w.HeaderMap.Get("Location"))
 }
 
 func TestAuthRedirectHandler_MissingCtxRequestToken(t *testing.T) {
 	config := &oauth1.Config{}
-	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	failure := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			assert.Equal(t, "oauth1: Context missing request token or secret", err.Error())
@@ -119,10 +121,10 @@ func TestAuthRedirectHandler_MissingCtxRequestToken(t *testing.T) {
 	// CallbackHandler cannot get the request token from the ctx, assert that:
 	// - failure handler is called
 	// - error about missing request token is added to the ctx
-	authRedirectHandler := AuthRedirectHandler(config, ctxh.ContextHandlerFunc(failure))
+	authRedirectHandler := AuthRedirectHandler(config, http.HandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
-	authRedirectHandler.ServeHTTP(context.Background(), w, req)
+	authRedirectHandler.ServeHTTP(w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
@@ -133,7 +135,8 @@ func TestAuthRedirectHandler_AuthorizationURL(t *testing.T) {
 			AuthorizeURL: "%gh&%ij", // always causes AuthorizationURL parse error
 		},
 	}
-	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	failure := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			assert.Equal(t, "parse %gh&%ij: invalid URL escape \"%gh\"", err.Error())
@@ -144,11 +147,11 @@ func TestAuthRedirectHandler_AuthorizationURL(t *testing.T) {
 	// AuthRedirectHandler cannot construct the AuthorizationURL, assert that:
 	// - failure handler is called
 	// - error about authorization URL is added to the ctx
-	authRedirectHandler := AuthRedirectHandler(config, ctxh.ContextHandlerFunc(failure))
+	authRedirectHandler := AuthRedirectHandler(config, http.HandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 	ctx := WithRequestToken(context.Background(), requestToken, "")
-	authRedirectHandler.ServeHTTP(ctx, w, req)
+	authRedirectHandler.ServeHTTP(w, req.WithContext(ctx))
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
@@ -169,7 +172,8 @@ func TestCallbackHandler(t *testing.T) {
 			AccessTokenURL: server.URL,
 		},
 	}
-	success := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	success := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		accessToken, accessSecret, err := AccessTokenFromContext(ctx)
 		assert.Equal(t, expectedToken, accessToken)
 		assert.Equal(t, expectedSecret, accessSecret)
@@ -182,18 +186,19 @@ func TestCallbackHandler(t *testing.T) {
 	// - success handler is called
 	// - access token and secret added to the ctx of the success handler
 	// - failure handler is not called
-	callbackHandler := CallbackHandler(config, ctxh.ContextHandlerFunc(success), failure)
+	callbackHandler := CallbackHandler(config, http.HandlerFunc(success), failure)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?oauth_token=any_token&oauth_verifier=any_verifier", nil)
 	ctx := WithRequestToken(context.Background(), "", requestSecret)
-	callbackHandler.ServeHTTP(ctx, w, req)
+	callbackHandler.ServeHTTP(w, req.WithContext(ctx))
 	assert.Equal(t, "success handler called", w.Body.String())
 }
 
 func TestCallbackHandler_ParseAuthorizationCallbackError(t *testing.T) {
 	config := &oauth1.Config{}
 	success := testutils.AssertSuccessNotCalled(t)
-	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	failure := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			assert.Equal(t, "oauth1: Request missing oauth_token or oauth_verifier", err.Error())
@@ -204,17 +209,18 @@ func TestCallbackHandler_ParseAuthorizationCallbackError(t *testing.T) {
 	// CallbackHandler called without oauth_token or oauth_verifier, assert that:
 	// - failure handler is called
 	// - error about missing oauth_token or oauth_verifier is added to the ctx
-	callbackHandler := CallbackHandler(config, success, ctxh.ContextHandlerFunc(failure))
+	callbackHandler := CallbackHandler(config, success, http.HandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?oauth_verifier=", nil)
-	callbackHandler.ServeHTTP(context.Background(), w, req)
+	callbackHandler.ServeHTTP(w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
 func TestCallbackHandler_MissingCtxRequestSecret(t *testing.T) {
 	config := &oauth1.Config{}
 	success := testutils.AssertSuccessNotCalled(t)
-	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	failure := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			assert.Equal(t, "oauth1: Context missing request token or secret", err.Error())
@@ -225,10 +231,10 @@ func TestCallbackHandler_MissingCtxRequestSecret(t *testing.T) {
 	// CallbackHandler cannot get the request secret from the ctx, assert that:
 	// - failure handler is called
 	// - error about missing request secret is added to the ctx
-	callbackHandler := CallbackHandler(config, success, ctxh.ContextHandlerFunc(failure))
+	callbackHandler := CallbackHandler(config, success, http.HandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?oauth_token=any_token&oauth_verifier=any_verifier", nil)
-	callbackHandler.ServeHTTP(context.Background(), w, req)
+	callbackHandler.ServeHTTP(w, req)
 	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
@@ -243,7 +249,8 @@ func TestCallbackHandler_AccessTokenError(t *testing.T) {
 		},
 	}
 	success := testutils.AssertSuccessNotCalled(t)
-	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	failure := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			// first validation in OAuth1 impl failed
@@ -255,10 +262,10 @@ func TestCallbackHandler_AccessTokenError(t *testing.T) {
 	// CallbackHandler cannot get the OAuth1 access token, assert that:
 	// - failure handler is called
 	// - error about StatusInternalServerError is added to the ctx
-	callbackHandler := CallbackHandler(config, success, ctxh.ContextHandlerFunc(failure))
+	callbackHandler := CallbackHandler(config, success, http.HandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/?oauth_token=any_token&oauth_verifier=any_verifier", nil)
 	ctx := WithRequestToken(context.Background(), "", requestSecret)
-	callbackHandler.ServeHTTP(ctx, w, req)
+	callbackHandler.ServeHTTP(w, req.WithContext(ctx))
 	assert.Equal(t, "failure handler called", w.Body.String())
 }

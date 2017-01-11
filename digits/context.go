@@ -1,10 +1,10 @@
 package digits
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/dghubble/go-digits/digits"
-	"golang.org/x/net/context"
 )
 
 // unexported key type prevents collisions

@@ -1,19 +1,19 @@
 package twitter
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
-	"github.com/dghubble/ctxh"
 	"github.com/dghubble/gologin"
 	oauth1Login "github.com/dghubble/gologin/oauth1"
 	"github.com/dghubble/gologin/testutils"
 	"github.com/dghubble/oauth1"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 )
 
 const (
@@ -26,11 +26,13 @@ const (
 func TestTokenHandler(t *testing.T) {
 	proxyClient, _, server := newTwitterVerifyServer(testTwitterUserJSON)
 	defer server.Close()
+
 	// oauth1 Client will use the proxy client's base Transport
 	ctx := context.WithValue(context.Background(), oauth1.HTTPClient, proxyClient)
 
 	config := &oauth1.Config{}
-	success := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	success := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		accessToken, accessSecret, err := oauth1Login.AccessTokenFromContext(ctx)
 		assert.Nil(t, err)
 		assert.Equal(t, testTwitterToken, accessToken)
@@ -40,53 +42,57 @@ func TestTokenHandler(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, expectedUserID, user.ID)
 		assert.Equal(t, "1234", user.IDStr)
+		fmt.Fprintf(w, "success handler called")
 	}
-	handler := TokenHandler(config, ctxh.ContextHandlerFunc(success), testutils.AssertFailureNotCalled(t))
-	ts := httptest.NewServer(ctxh.NewHandlerWithContext(ctx, handler))
-	// POST token to server under test
-	resp, err := http.PostForm(ts.URL, url.Values{accessTokenField: {testTwitterToken}, accessTokenSecretField: {testTwitterTokenSecret}})
-	assert.Nil(t, err)
-	if assert.NotNil(t, resp) {
-		assert.Equal(t, resp.StatusCode, http.StatusOK)
-	}
+	failure := testutils.AssertFailureNotCalled(t)
+
+	// TokenHandler assert that:
+	// - access token/secret are read from POST
+	// - twitter User is obtained from Twitter API
+	// - success handler is called
+	// - twitter User is added to success handler ctx
+	tokenHandler := TokenHandler(config, http.HandlerFunc(success), failure)
+	w := httptest.NewRecorder()
+	form := url.Values{accessTokenField: {testTwitterToken}, accessTokenSecretField: {testTwitterTokenSecret}}
+	req, _ := http.NewRequest("POST", "/", strings.NewReader(form.Encode()))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	tokenHandler.ServeHTTP(w, req.WithContext(ctx))
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "success handler called", w.Body.String())
 }
 
 func TestTokenHandler_ErrorVerifyingToken(t *testing.T) {
 	proxyClient, server := testutils.NewErrorServer("Twitter Verify Credentials Down", http.StatusInternalServerError)
 	defer server.Close()
+
 	// oauth1 Client will use the proxy client's base Transport
 	ctx := context.WithValue(context.Background(), oauth1.HTTPClient, proxyClient)
 
 	config := &oauth1.Config{}
-	handler := TokenHandler(config, testutils.AssertSuccessNotCalled(t), nil)
-	ts := httptest.NewServer(ctxh.NewHandlerWithContext(ctx, handler))
-	// assert that error occurs indicating the Twitter User could not be confirmed
-	resp, _ := http.PostForm(ts.URL, url.Values{accessTokenField: {testTwitterToken}, accessTokenSecretField: {testTwitterTokenSecret}})
-	testutils.AssertBodyString(t, resp.Body, ErrUnableToGetTwitterUser.Error()+"\n")
-}
-
-func TestTokenHandler_ErrorVerifyingTokenPassesError(t *testing.T) {
-	proxyClient, server := testutils.NewErrorServer("Twitter Verify Credentials Down", http.StatusInternalServerError)
-	defer server.Close()
-	// oauth1 Client will use the proxy client's base Transport
-	ctx := context.WithValue(context.Background(), oauth1.HTTPClient, proxyClient)
-
-	config := &oauth1.Config{}
-	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		// assert that error passed through ctx
+	failure := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
 		if assert.Error(t, err) {
 			assert.Equal(t, err, ErrUnableToGetTwitterUser)
 		}
+		fmt.Fprintf(w, "failure handler called")
 	}
-	handler := TokenHandler(config, testutils.AssertSuccessNotCalled(t), ctxh.ContextHandlerFunc(failure))
-	ts := httptest.NewServer(ctxh.NewHandlerWithContext(ctx, handler))
-	http.PostForm(ts.URL, url.Values{accessTokenField: {testTwitterToken}, accessTokenSecretField: {testTwitterTokenSecret}})
+
+	// TokenHandler cannot verify Twitter credentials and get User, assert that:
+	// - failure handler is called
+	// - error is added to the failure handler context
+	tokenHandler := TokenHandler(config, testutils.AssertSuccessNotCalled(t), http.HandlerFunc(failure))
+	w := httptest.NewRecorder()
+	form := url.Values{accessTokenField: {testTwitterToken}, accessTokenSecretField: {testTwitterTokenSecret}}
+	req, _ := http.NewRequest("POST", "/", strings.NewReader(form.Encode()))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	tokenHandler.ServeHTTP(w, req.WithContext(ctx))
+	assert.Equal(t, "failure handler called", w.Body.String())
 }
 
 func TestTokenHandler_NonPost(t *testing.T) {
 	config := &oauth1.Config{}
-	ts := httptest.NewServer(ctxh.NewHandler(TokenHandler(config, testutils.AssertSuccessNotCalled(t), nil)))
+	ts := httptest.NewServer(TokenHandler(config, testutils.AssertSuccessNotCalled(t), nil))
 	resp, err := http.Get(ts.URL)
 	assert.Nil(t, err)
 	// assert that default (nil) failure handler returns a 405 Method Not Allowed
@@ -98,20 +104,21 @@ func TestTokenHandler_NonPost(t *testing.T) {
 
 func TestTokenHandler_NonPostPassesError(t *testing.T) {
 	config := &oauth1.Config{}
-	failure := func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
+	failure := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
 		// assert that Method not allowed error passed through ctx
 		err := gologin.ErrorFromContext(ctx)
 		if assert.Error(t, err) {
 			assert.Equal(t, err, fmt.Errorf("Method not allowed"))
 		}
 	}
-	ts := httptest.NewServer(ctxh.NewHandler(TokenHandler(config, testutils.AssertSuccessNotCalled(t), ctxh.ContextHandlerFunc(failure))))
+	ts := httptest.NewServer(TokenHandler(config, testutils.AssertSuccessNotCalled(t), http.HandlerFunc(failure)))
 	http.Get(ts.URL)
 }
 
 func TestTokenHandler_InvalidFields(t *testing.T) {
 	config := &oauth1.Config{}
-	ts := httptest.NewServer(ctxh.NewHandler(TokenHandler(config, testutils.AssertSuccessNotCalled(t), nil)))
+	ts := httptest.NewServer(TokenHandler(config, testutils.AssertSuccessNotCalled(t), nil))
 
 	// assert errors occur for different missing POST fields
 	resp, err := http.PostForm(ts.URL, nil)
