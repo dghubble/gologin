@@ -3,7 +3,7 @@
 
 Notable changes between releases.
 
-## v2.0.0 (TBD)
+## v2.0.0 (2016-01-10)
 
 * Support for Go 1.7+ standard `context`
 * Change `gologin` handlers to be standard `http.Handler`'s
