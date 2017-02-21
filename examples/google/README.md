@@ -10,6 +10,9 @@ Package `gologin` provides Go handlers for the Google OAuth2 Authorization flow 
 ### Getting Started
 
     go get github.com/dghubble/gologin/google
+    go get google.golang.org/api/oauth2/v2
+    go get golang.org/x/oauth2/google
+    go get github.com/dghubble/sessions.git
     cd $GOPATH/src/github.com/dghubble/gologin/examples/google
     go get .
 
