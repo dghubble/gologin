@@ -59,7 +59,7 @@ func githubHandler(config *oauth2.Config, success, failure http.Handler) http.Ha
 		}
 		httpClient := config.Client(ctx, token)
 		githubClient := github.NewClient(httpClient)
-		user, resp, err := githubClient.Users.Get("")
+		user, resp, err := githubClient.Users.Get(ctx, "")
 		err = validateResponse(user, resp, err)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
