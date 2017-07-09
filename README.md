@@ -1,34 +1,17 @@
-
 # gologin [![Build Status](https://travis-ci.org/dghubble/gologin.svg?branch=master)](https://travis-ci.org/dghubble/gologin) [![GoDoc](https://godoc.org/github.com/dghubble/gologin?status.png)](https://godoc.org/github.com/dghubble/gologin)
 <img align="right" src="https://storage.googleapis.com/dghubble/gologin.png">
 
-Package `gologin` provides chainable login `http.Handler`'s for Google, Github, Twitter, Digits, Facebook, Bitbucket, Tumblr, OAuth1, OAuth2, and other authentication providers.
+Package `gologin` provides chainable login `http.Handler`'s for [Google](http://godoc.org/github.com/dghubble/gologin/google), [Github](http://godoc.org/github.com/dghubble/gologin/github), [Twitter](http://godoc.org/github.com/dghubble/gologin/twitter), [Digits](http://godoc.org/github.com/dghubble/gologin/digits), [Facebook](http://godoc.org/github.com/dghubble/gologin/facebook), [Bitbucket](http://godoc.org/github.com/dghubble/gologin/bitbucket), [Tumblr](http://godoc.org/github.com/dghubble/gologin/tumblr), or any [OAuth1](http://godoc.org/github.com/dghubble/gologin/oauth1) or [OAuth2](http://godoc.org/github.com/dghubble/gologin/oauth2) authentication providers.
 
-Choose a subpackage. Register the `LoginHandler` and `CallbackHandler` for web logins or the `TokenHandler` for (mobile) token logins. Get the access token or authenticated User/Account from the request `context`.
+Choose a subpackage. Register the `LoginHandler` and `CallbackHandler` for web logins or the `TokenHandler` for (mobile) token logins. Get the authenticated user or access token from the request `context`.
 
 See [examples](examples) for tutorials with apps you can run from the command line. Visit [whoam.io](https://whoam.io/) to see a live site running on some Kubernetes clusters.
 
-**Announcement**: Go 1.7+ includes `context` in the standard library. With `gologin` `v2.0.0`, handlers have been updated to standard `http.Handler`'s. See [migration](#migration-from-v100). Those requiring Go 1.6 support should use the latest `v1.0.*` tag.
-
-### Packages
-
-* Google - [docs](http://godoc.org/github.com/dghubble/gologin/google) &#183; [tutorial](examples/google)
-* Github - [docs](http://godoc.org/github.com/dghubble/gologin/github) &#183; [tutorial](examples/github)
-* Facebook - [docs](http://godoc.org/github.com/dghubble/gologin/facebook) &#183; [tutorial](examples/facebook)
-* Twitter - [docs](http://godoc.org/github.com/dghubble/gologin/twitter) &#183; [tutorial](examples/twitter)
-* Digits - [docs](http://godoc.org/github.com/dghubble/gologin/digits) &#183; [tutorial](examples/digits)
-* Bitbucket [docs](http://godoc.org/github.com/dghubble/gologin/bitbucket)
-* Tumblr - [docs](http://godoc.org/github.com/dghubble/gologin/tumblr)
-* OAuth2 - [docs](http://godoc.org/github.com/dghubble/gologin/oauth2)
-* OAuth1 - [docs](http://godoc.org/github.com/dghubble/gologin/oauth1)
-
 ## Features
 
-* Authenticate users to obtain an access token or User/Account
 * `LoginHandler` and `CallbackHandler` support web login flows
 * `TokenHandler` supports native mobile token login flows
-* Uses standard `http.Handler` and the Go 1.7+ `context`
-* Does not attempt to be your session system or token system
+* Obtain the user or access token from the `context`
 * Configurable OAuth 2 state parameter handling (CSRF protection)
 * Configurable OAuth 1 request secret handling
 
@@ -38,7 +21,7 @@ See [examples](examples) for tutorials with apps you can run from the command li
 
 ## Docs
 
-Read [GoDoc](https://godoc.org/github.com/dghubble/gologin)
+Read [GoDoc](https://godoc.org/github.com/dghubble/gologin) or check the [examples](examples).
 
 ## Overview
 
@@ -140,19 +123,6 @@ You may use `oauth2.WithState(context.Context, state string)` for this. [docs](h
 ### Failure Handlers
 
 If you wish to define your own failure `http.Handler`, you can get the error from the `ctx` using `gologin.ErrorFromContext(ctx)`.
-
-### Production Requirements
-
-* Use HTTPS.
-* Never put consumer/client secrets in source control.
-* Ensure the CookieConfig requires state or temp credential cookies be sent over HTTPS-only.
-
-### Migration from v1.0.0
-
-* Update `golang.org/x/net/context` imports to `context`, which is part of the standard library in Go 1.7+
-* Change any `ctxh.ContextHandler` to a `http.Handler`. The `ctx` is passed via the request so the argument is no longer needed.
-* Remove any `ctxh.NewHandler(...)` wrap. `gologin` handlers are now standard `http.Handler`'s, conversion is no longer required.
-* Use `req.Context()` to obtain the request context within handlers.
 
 ## Mobile
 
