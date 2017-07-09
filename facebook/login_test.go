@@ -15,8 +15,8 @@ import (
 )
 
 func TestFacebookHandler(t *testing.T) {
-	jsonData := `{"id": "54638001", "name": "Ivy Crimson"}`
-	expectedUser := &User{ID: "54638001", Name: "Ivy Crimson"}
+	jsonData := `{"id": "54638001", "name": "Ivy Crimson", "email": "ivy@harvard.edu"}`
+	expectedUser := &User{ID: "54638001", Name: "Ivy Crimson", Email: "ivy@harvard.edu"}
 	proxyClient, server := newFacebookTestServer(jsonData)
 	defer server.Close()
 	// oauth2 Client will use the proxy client's base Transport

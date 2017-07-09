@@ -13,7 +13,7 @@ import (
 // responds with the given json data. The caller must close the server.
 func newFacebookTestServer(jsonData string) (*http.Client, *httptest.Server) {
 	client, mux, server := testutils.TestServer()
-	mux.HandleFunc("/v2.4/me", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/v2.9/me", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, jsonData)
 	})

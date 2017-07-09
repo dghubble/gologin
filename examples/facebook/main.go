@@ -42,6 +42,7 @@ func New(config *Config) *http.ServeMux {
 		ClientSecret: config.FacebookClientSecret,
 		RedirectURL:  "http://localhost:8080/facebook/callback",
 		Endpoint:     facebookOAuth2.Endpoint,
+		Scopes:       []string{"email"},
 	}
 	// state param cookies require HTTPS by default; disable for localhost development
 	stateConfig := gologin.DebugOnlyCookieConfig
