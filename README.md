@@ -5,7 +5,7 @@ Package `gologin` provides chainable login `http.Handler`'s for [Google](http://
 
 Choose a subpackage. Register the `LoginHandler` and `CallbackHandler` for web logins or the `TokenHandler` for (mobile) token logins. Get the authenticated user or access token from the request `context`.
 
-See [examples](examples) for tutorials with apps you can run from the command line. Visit [whoam.io](https://whoam.io/) to see a live site running on some Kubernetes clusters.
+See [examples](examples) for tutorials with apps you can run from the command line.
 
 ## Features
 
