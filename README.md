@@ -1,7 +1,7 @@
 # gologin [![Build Status](https://travis-ci.org/dghubble/gologin.svg?branch=master)](https://travis-ci.org/dghubble/gologin) [![GoDoc](https://godoc.org/github.com/dghubble/gologin?status.png)](https://godoc.org/github.com/dghubble/gologin)
 <img align="right" src="https://storage.googleapis.com/dghubble/gologin.png">
 
-Package `gologin` provides chainable login `http.Handler`'s for [Google](http://godoc.org/github.com/dghubble/gologin/google), [Github](http://godoc.org/github.com/dghubble/gologin/github), [Twitter](http://godoc.org/github.com/dghubble/gologin/twitter), [Digits](http://godoc.org/github.com/dghubble/gologin/digits), [Facebook](http://godoc.org/github.com/dghubble/gologin/facebook), [Bitbucket](http://godoc.org/github.com/dghubble/gologin/bitbucket), [Tumblr](http://godoc.org/github.com/dghubble/gologin/tumblr), or any [OAuth1](http://godoc.org/github.com/dghubble/gologin/oauth1) or [OAuth2](http://godoc.org/github.com/dghubble/gologin/oauth2) authentication providers.
+Package `gologin` provides chainable login `http.Handler`'s for [Google](http://godoc.org/github.com/dghubble/gologin/google), [Github](http://godoc.org/github.com/dghubble/gologin/github), [Twitter](http://godoc.org/github.com/dghubble/gologin/twitter), [Facebook](http://godoc.org/github.com/dghubble/gologin/facebook), [Bitbucket](http://godoc.org/github.com/dghubble/gologin/bitbucket), [Tumblr](http://godoc.org/github.com/dghubble/gologin/tumblr), or any [OAuth1](http://godoc.org/github.com/dghubble/gologin/oauth1) or [OAuth2](http://godoc.org/github.com/dghubble/gologin/oauth2) authentication providers.
 
 Choose a subpackage. Register the `LoginHandler` and `CallbackHandler` for web logins or the `TokenHandler` for (mobile) token logins. Get the authenticated user or access token from the request `context`.
 
@@ -126,7 +126,7 @@ If you wish to define your own failure `http.Handler`, you can get the error fro
 
 ## Mobile
 
-Twitter and Digits include a `TokenHandler` which can be useful for building APIs for mobile devices which use Login with Twitter or Login with Digits.
+Twitter includes a `TokenHandler` which can be useful for building APIs for mobile devices which use Login with Twitter.
 
 ## Goals
 
