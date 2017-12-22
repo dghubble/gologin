@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/dghubble/go-digits/digits"
-	"github.com/dghubble/gologin"
 	"github.com/dghubble/sling"
+	"github.com/jbcjorge/gologin"
 )
 
 const (

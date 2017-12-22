@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/dghubble/go-digits/digits"
-	"github.com/dghubble/gologin/testutils"
+	"github.com/jbcjorge/gologin/testutils"
 	"github.com/stretchr/testify/assert"
 )
 
