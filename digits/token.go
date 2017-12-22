@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/dghubble/go-digits/digits"
-	"github.com/dghubble/gologin"
-	oauth1Login "github.com/dghubble/gologin/oauth1"
 	"github.com/dghubble/oauth1"
+	"github.com/jbcjorge/gologin"
+	oauth1Login "github.com/jbcjorge/gologin/oauth1"
 )
 
 const (

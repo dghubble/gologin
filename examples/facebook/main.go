@@ -42,7 +42,7 @@ func New(config *Config) *http.ServeMux {
 		ClientSecret: config.FacebookClientSecret,
 		RedirectURL:  "http://localhost:8080/facebook/callback",
 		Endpoint:     facebookOAuth2.Endpoint,
-		Scopes:       []string{"email"},
+		Scopes:       []string{"public_profile", "email"},
 	}
 	// state param cookies require HTTPS by default; disable for localhost development
 	stateConfig := gologin.DebugOnlyCookieConfig
@@ -60,6 +60,7 @@ func issueSession() http.Handler {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		fmt.Printf("%+v", facebookUser)
 		// 2. Implement a success handler to issue some form of session
 		session := sessionStore.New(sessionName)
 		session.Values[sessionUserKey] = facebookUser.ID

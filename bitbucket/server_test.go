@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/dghubble/gologin/testutils"
+	"github.com/jbcjorge/gologin/testutils"
 )
 
 // newBitbucketTestServer returns a new httptest.Server which mocks the
