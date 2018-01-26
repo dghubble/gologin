@@ -1,7 +1,9 @@
 package facebook
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/dghubble/sling"
 )
@@ -41,10 +43,15 @@ func newClient(httpClient *http.Client) *client {
 }
 
 func (c *client) Me() (*User, *http.Response, error) {
+	return c.Get([]string{"name", "email"})
+}
+
+func (c *client) Get(fields []string) (*User, *http.Response, error) {
 	user := new(User)
+	path := fmt.Sprintf("me?fields=%s", strings.Join(fields[:], ","))
 	// Facebook returns JSON as Content-Type text/javascript :(
 	// Set Accept header to receive proper Content-Type application/json
 	// so Sling will decode into the struct
-	resp, err := c.sling.New().Set("Accept", "application/json").Get("me?fields=name,email").ReceiveSuccess(user)
+	resp, err := c.sling.New().Set("Accept", "application/json").Get(path).ReceiveSuccess(user)
 	return user, resp, err
 }
