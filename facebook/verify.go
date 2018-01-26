@@ -12,9 +12,18 @@ const facebookAPI = "https://graph.facebook.com/v2.9/"
 //
 // Note that user ids are unique to each app.
 type User struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Verified bool   `json:"verified"`
+	Picture  struct {
+		Data struct {
+			Height     int    `json:"height"`
+			Width      int    `json:"width"`
+			URL        string `json:"url"`
+			Silhouette bool   `json:"is_silhouette"`
+		}
+	} `json:"picture"`
 }
 
 // client is a Facebook client for obtaining the current User.
