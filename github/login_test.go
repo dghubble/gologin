@@ -17,7 +17,7 @@ import (
 
 func TestGithubHandler(t *testing.T) {
 	jsonData := `{"id": 917408, "name": "Alyssa Hacker"}`
-	expectedUser := &github.User{ID: github.Int(917408), Name: github.String("Alyssa Hacker")}
+	expectedUser := &github.User{ID: github.Int64(917408), Name: github.String("Alyssa Hacker")}
 	proxyClient, server := newGithubTestServer(jsonData)
 	defer server.Close()
 
@@ -100,7 +100,7 @@ func TestGithubHandler_ErrorGettingUser(t *testing.T) {
 }
 
 func TestValidateResponse(t *testing.T) {
-	validUser := &github.User{ID: github.Int(123)}
+	validUser := &github.User{ID: github.Int64(123)}
 	validResponse := &github.Response{Response: &http.Response{StatusCode: 200}}
 	invalidResponse := &github.Response{Response: &http.Response{StatusCode: 500}}
 	assert.Equal(t, nil, validateResponse(validUser, validResponse, nil))

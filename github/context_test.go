@@ -9,7 +9,10 @@ import (
 )
 
 func TestContextUser(t *testing.T) {
-	expectedUser := &github.User{ID: github.Int(917408), Name: github.String("Github User")}
+	expectedUser := &github.User{
+		ID:   github.Int64(917408),
+		Name: github.String("Github User"),
+	}
 	ctx := WithUser(context.Background(), expectedUser)
 	user, err := UserFromContext(ctx)
 	assert.Equal(t, expectedUser, user)
