@@ -12,6 +12,7 @@ import (
 // Facebook login errors
 var (
 	ErrUnableToGetFacebookUser = errors.New("facebook: unable to get Facebook User")
+	Fields                     = []string{"email", "name"}
 )
 
 // StateHandler checks for a state cookie. If found, the state value is read
@@ -58,8 +59,8 @@ func facebookHandler(config *oauth2.Config, success, failure http.Handler) http.
 			return
 		}
 		httpClient := config.Client(ctx, token)
-		facebookService := newClient(httpClient)
-		user, resp, err := facebookService.Me()
+		facebookUserClient := newClient(httpClient)
+		user, resp, err := facebookUserClient.Get(Fields)
 		err = validateResponse(user, resp, err)
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
