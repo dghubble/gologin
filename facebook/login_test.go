@@ -81,9 +81,7 @@ func TestFacebookHandler_ErrorGettingUser(t *testing.T) {
 	failure := func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
-		if assert.NotNil(t, err) {
-			assert.Equal(t, ErrUnableToGetFacebookUser, err)
-		}
+		assert.Error(t, err)
 		fmt.Fprintf(w, "failure handler called")
 	}
 
@@ -102,7 +100,7 @@ func TestValidateResponse(t *testing.T) {
 	validResponse := &http.Response{StatusCode: 200}
 	invalidResponse := &http.Response{StatusCode: 500}
 	assert.Equal(t, nil, validateResponse(validUser, validResponse, nil))
-	assert.Equal(t, ErrUnableToGetFacebookUser, validateResponse(validUser, validResponse, fmt.Errorf("Server error")))
-	assert.Equal(t, ErrUnableToGetFacebookUser, validateResponse(validUser, invalidResponse, nil))
+	assert.Error(t, validateResponse(validUser, validResponse, fmt.Errorf("Server error")))
+	assert.Error(t, validateResponse(validUser, invalidResponse, nil))
 	assert.Equal(t, ErrUnableToGetFacebookUser, validateResponse(&User{}, validResponse, nil))
 }

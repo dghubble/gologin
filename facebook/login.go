@@ -2,6 +2,7 @@ package facebook
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/dghubble/gologin"
@@ -76,7 +77,7 @@ func facebookHandler(config *oauth2.Config, success, failure http.Handler) http.
 // http.Response, or error are unexpected. Returns nil if they are valid.
 func validateResponse(user *User, resp *http.Response, err error) error {
 	if err != nil || resp.StatusCode != http.StatusOK {
-		return ErrUnableToGetFacebookUser
+		return fmt.Errorf("facebook: unable to get Facebook user: %v", err)
 	}
 	if user == nil || user.ID == "" {
 		return ErrUnableToGetFacebookUser
