@@ -8,7 +8,7 @@ matrix:
   allow_failures:
     - go: tip
 install:
-  - go get github.com/golang/lint/golint
+  - go get golang.org/x/lint/golint 
   - go get -v -t ./...
 script:
   - ./test
