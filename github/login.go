@@ -2,7 +2,10 @@ package github
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/dghubble/gologin"
 	oauth2Login "github.com/dghubble/gologin/oauth2"
@@ -57,8 +60,14 @@ func githubHandler(config *oauth2.Config, success, failure http.Handler) http.Ha
 			failure.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
+
 		httpClient := config.Client(ctx, token)
-		githubClient := github.NewClient(httpClient)
+		githubClient, err := githubClientFromAuthURL(config.Endpoint.AuthURL, httpClient)
+		if err != nil {
+			ctx = gologin.WithError(ctx, fmt.Errorf("could not parse AuthURL %s", config.Endpoint.AuthURL))
+			failure.ServeHTTP(w, req.WithContext(ctx))
+			return
+		}
 		user, resp, err := githubClient.Users.Get(ctx, "")
 		err = validateResponse(user, resp, err)
 		if err != nil {
@@ -82,4 +91,20 @@ func validateResponse(user *github.User, resp *github.Response, err error) error
 		return ErrUnableToGetGithubUser
 	}
 	return nil
+}
+
+func githubClientFromAuthURL(authURL string, httpClient *http.Client) (*github.Client, error) {
+	if strings.HasPrefix(authURL, "https://github.com/") {
+		return github.NewClient(httpClient), nil
+	} else {
+		baseURL, err := url.Parse(authURL)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse AuthURL %s", authURL)
+		}
+		baseURL.Path = ""
+		baseURL.RawQuery = ""
+		baseURL.Fragment = ""
+		baseURLStr := strings.TrimSuffix(baseURL.String(), "/") + "/api/v3/"
+		return github.NewEnterpriseClient(baseURLStr, baseURLStr, httpClient)
+	}
 }
