@@ -27,6 +27,7 @@ func TestGithubHandler(t *testing.T) {
 	ctx = oauth2Login.WithToken(ctx, anyToken)
 
 	config := &oauth2.Config{}
+	config.Endpoint.AuthURL = "https://github.com/login/oauth/authorize"
 	success := func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		githubUser, err := UserFromContext(ctx)
@@ -107,4 +108,24 @@ func TestValidateResponse(t *testing.T) {
 	assert.Equal(t, ErrUnableToGetGithubUser, validateResponse(validUser, validResponse, fmt.Errorf("Server error")))
 	assert.Equal(t, ErrUnableToGetGithubUser, validateResponse(validUser, invalidResponse, nil))
 	assert.Equal(t, ErrUnableToGetGithubUser, validateResponse(&github.User{}, validResponse, nil))
+}
+
+func Test_githubClientFromAuthURL(t *testing.T) {
+	for _, test := range []struct {
+		authURL          string
+		expClientBaseURL string
+	}{
+		{authURL: "https://github.com/login/oauth/authorize/", expClientBaseURL: "https://api.github.com/"},
+		{authURL: "https://github.com/login/oauth/authorize", expClientBaseURL: "https://api.github.com/"},
+		{authURL: "https://github.mycompany.com/login/oauth/authorize", expClientBaseURL: "https://github.mycompany.com/api/v3/"},
+		{authURL: "http://github.mycompany.com/login/oauth/authorize", expClientBaseURL: "http://github.mycompany.com/api/v3/"},
+	} {
+		client, err := githubClientFromAuthURL(test.authURL, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := client.BaseURL.String(), test.expClientBaseURL; got != want {
+			t.Errorf("For authorization URL %q, expected client URL %q, but got %q", test.authURL, want, got)
+		}
+	}
 }

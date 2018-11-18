@@ -64,7 +64,7 @@ func githubHandler(config *oauth2.Config, success, failure http.Handler) http.Ha
 		httpClient := config.Client(ctx, token)
 		githubClient, err := githubClientFromAuthURL(config.Endpoint.AuthURL, httpClient)
 		if err != nil {
-			ctx = gologin.WithError(ctx, fmt.Errorf("could not parse AuthURL %s", config.Endpoint.AuthURL))
+			ctx = gologin.WithError(ctx, fmt.Errorf("github: error creating Client: %v", err))
 			failure.ServeHTTP(w, req.WithContext(ctx))
 			return
 		}
@@ -94,17 +94,17 @@ func validateResponse(user *github.User, resp *github.Response, err error) error
 }
 
 func githubClientFromAuthURL(authURL string, httpClient *http.Client) (*github.Client, error) {
-	if strings.HasPrefix(authURL, "https://github.com/") {
-		return github.NewClient(httpClient), nil
-	} else {
+	client := github.NewClient(httpClient)
+	if !strings.HasPrefix(authURL, "https://github.com/") {
+		// convert authURL to GHE baseURL https://<mycompany>.github.com/api/v3/
 		baseURL, err := url.Parse(authURL)
 		if err != nil {
-			return nil, fmt.Errorf("could not parse AuthURL %s", authURL)
+			return nil, fmt.Errorf("github: error parsing Endoint.AuthURL: %s", authURL)
 		}
-		baseURL.Path = ""
-		baseURL.RawQuery = ""
-		baseURL.Fragment = ""
-		baseURLStr := strings.TrimSuffix(baseURL.String(), "/") + "/api/v3/"
-		return github.NewEnterpriseClient(baseURLStr, baseURLStr, httpClient)
+		baseURL.Path = "/api/v3/"
+
+		client.BaseURL = baseURL
+		client.UploadURL = baseURL
 	}
+	return client, nil
 }
