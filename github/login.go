@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/dghubble/gologin"
 	oauth2Login "github.com/dghubble/gologin/oauth2"
@@ -38,9 +37,19 @@ func LoginHandler(config *oauth2.Config, failure http.Handler) http.Handler {
 
 // CallbackHandler handles Github redirection URI requests and adds the Github
 // access token and User to the ctx. If authentication succeeds, handling
-// delegates to the success handler, otherwise to the failure handler.
+// delegates to the success handler, otherwise to the failure handler. If the
+// Github instance is an GHE instance, use EnterpriseCallbackHandler instead.
 func CallbackHandler(config *oauth2.Config, success, failure http.Handler) http.Handler {
-	success = githubHandler(config, success, failure)
+	success = githubHandler(config, false, success, failure)
+	return oauth2Login.CallbackHandler(config, success, failure)
+}
+
+// EnterpriseCallbackHandler returns an HTTP handler that performs the same
+// operations as that returned by CallbackHandler, but for a GHE instance. The
+// main difference is that it infers the Github Enterprise API URL from the
+// OAuth2 config's authorization endpoint URL.
+func EnterpriseCallbackHandler(config *oauth2.Config, success, failure http.Handler) http.Handler {
+	success = githubHandler(config, true, success, failure)
 	return oauth2Login.CallbackHandler(config, success, failure)
 }
 
@@ -48,7 +57,7 @@ func CallbackHandler(config *oauth2.Config, success, failure http.Handler) http.
 // get the corresponding Github User. If successful, the User is added to the
 // ctx and the success handler is called. Otherwise, the failure handler is
 // called.
-func githubHandler(config *oauth2.Config, success, failure http.Handler) http.Handler {
+func githubHandler(config *oauth2.Config, isEnterprise bool, success, failure http.Handler) http.Handler {
 	if failure == nil {
 		failure = gologin.DefaultFailureHandler
 	}
@@ -62,11 +71,16 @@ func githubHandler(config *oauth2.Config, success, failure http.Handler) http.Ha
 		}
 
 		httpClient := config.Client(ctx, token)
-		githubClient, err := githubClientFromAuthURL(config.Endpoint.AuthURL, httpClient)
-		if err != nil {
-			ctx = gologin.WithError(ctx, fmt.Errorf("github: error creating Client: %v", err))
-			failure.ServeHTTP(w, req.WithContext(ctx))
-			return
+		var githubClient *github.Client
+		if isEnterprise {
+			githubClient, err = enterpriseGithubClientFromAuthURL(config.Endpoint.AuthURL, httpClient)
+			if err != nil {
+				ctx = gologin.WithError(ctx, fmt.Errorf("github: error creating Client: %v", err))
+				failure.ServeHTTP(w, req.WithContext(ctx))
+				return
+			}
+		} else {
+			githubClient = github.NewClient(httpClient)
 		}
 		user, resp, err := githubClient.Users.Get(ctx, "")
 		err = validateResponse(user, resp, err)
@@ -93,18 +107,19 @@ func validateResponse(user *github.User, resp *github.Response, err error) error
 	return nil
 }
 
-func githubClientFromAuthURL(authURL string, httpClient *http.Client) (*github.Client, error) {
+// enterpriseGithubClientFromAuthURL returns a Github client that targets a GHE instance.
+func enterpriseGithubClientFromAuthURL(authURL string, httpClient *http.Client) (*github.Client, error) {
 	client := github.NewClient(httpClient)
-	if !strings.HasPrefix(authURL, "https://github.com/") {
-		// convert authURL to GHE baseURL https://<mycompany>.github.com/api/v3/
-		baseURL, err := url.Parse(authURL)
-		if err != nil {
-			return nil, fmt.Errorf("github: error parsing Endoint.AuthURL: %s", authURL)
-		}
-		baseURL.Path = "/api/v3/"
 
-		client.BaseURL = baseURL
-		client.UploadURL = baseURL
+	// convert authURL to GHE baseURL https://<mygithub>.com/api/v3/
+	baseURL, err := url.Parse(authURL)
+	if err != nil {
+		return nil, fmt.Errorf("github: error parsing Endoint.AuthURL: %s", authURL)
 	}
+
+	baseURL.Path = "/api/v3/"
+	client.BaseURL = baseURL
+	client.UploadURL = baseURL
+
 	return client, nil
 }
