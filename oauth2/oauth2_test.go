@@ -23,7 +23,7 @@ func NewAccessTokenServer(t *testing.T, json string) *httptest.Server {
 	})
 }
 
-// NewTestServeFunc is an adapter to allow the use of ordinary functions as
+// NewTestServerFunc is an adapter to allow the use of ordinary functions as
 // httptest.Server's for testing. Caller must close the server.
 func NewTestServerFunc(handler func(w http.ResponseWriter, r *http.Request)) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(handler))
