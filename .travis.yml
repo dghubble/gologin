@@ -1,12 +1,8 @@
 language: go
 go:
-  - 1.9
   - "1.10.x"
   - "1.11.x"
-  - tip
-matrix:
-  allow_failures:
-    - go: tip
+  - "1.12.x"
 install:
   - go get golang.org/x/lint/golint 
   - go get -v -t $(go list ./... | grep -v /examples)
