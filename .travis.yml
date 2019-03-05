@@ -11,4 +11,6 @@ install:
   - go get golang.org/x/lint/golint 
   - go get -v -t $(go list ./... | grep -v /examples)
 script:
-  - ./test
+  - make
+notification:
+  email: change
