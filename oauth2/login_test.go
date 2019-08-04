@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dghubble/gologin"
-	"github.com/dghubble/gologin/testutils"
+	"github.com/dghubble/gologin/v2"
+	"github.com/dghubble/gologin/v2/testutils"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/oauth2"
 )

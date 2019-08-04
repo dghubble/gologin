@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/dghubble/gologin/testutils"
+	"github.com/dghubble/gologin/v2/testutils"
 )
 
 // newFacebookTestServer returns a new httptest.Server which mocks the Facebook

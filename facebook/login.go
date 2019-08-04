@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/dghubble/gologin"
-	oauth2Login "github.com/dghubble/gologin/oauth2"
+	"github.com/dghubble/gologin/v2"
+	oauth2Login "github.com/dghubble/gologin/v2/oauth2"
 	"golang.org/x/oauth2"
 )
 
