@@ -4,6 +4,12 @@ Notable changes between releases.
 
 ## Latest
 
+## v2.2.0
+
+* Suffix packages with `/v2` to provide Go module support ([#37](https://github.com/dghubble/gologin/pull/37))
+  * Module users may import `github.com/dghubble/gologin/v2` starting in v2.2.0
+  * Non-module users may continue using releases prior to v2.2.0
+
 ## v2.1.0
 
 * Add `EnterpriseCallbackHandler` for Github Enterprise ([#33](https://github.com/dghubble/gologin/pull/33))
