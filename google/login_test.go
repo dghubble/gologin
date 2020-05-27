@@ -17,7 +17,7 @@ import (
 
 func TestGoogleHandler(t *testing.T) {
 	jsonData := `{"id": "900913", "name": "Ben Bitdiddle"}`
-	expectedUser := &google.Userinfoplus{Id: "900913", Name: "Ben Bitdiddle"}
+	expectedUser := &google.Userinfo{Id: "900913", Name: "Ben Bitdiddle"}
 	proxyClient, server := newGoogleTestServer(jsonData)
 	defer server.Close()
 	// oauth2 Client will use the proxy client's base Transport
@@ -101,8 +101,8 @@ func TestGoogleHandler_ErrorGettingUser(t *testing.T) {
 }
 
 func TestValidateResponse(t *testing.T) {
-	assert.Equal(t, nil, validateResponse(&google.Userinfoplus{Id: "123"}, nil))
+	assert.Equal(t, nil, validateResponse(&google.Userinfo{Id: "123"}, nil))
 	assert.Equal(t, ErrUnableToGetGoogleUser, validateResponse(nil, fmt.Errorf("Server error")))
 	assert.Equal(t, ErrCannotValidateGoogleUser, validateResponse(nil, nil))
-	assert.Equal(t, ErrCannotValidateGoogleUser, validateResponse(&google.Userinfoplus{Name: "Ben"}, nil))
+	assert.Equal(t, ErrCannotValidateGoogleUser, validateResponse(&google.Userinfo{Name: "Ben"}, nil))
 }

@@ -139,7 +139,7 @@ func TestAuthRedirectHandler_AuthorizationURL(t *testing.T) {
 		ctx := req.Context()
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
-			assert.Equal(t, "parse %gh&%ij: invalid URL escape \"%gh\"", err.Error())
+			assert.Equal(t, "parse \"%gh&%ij\": invalid URL escape \"%gh\"", err.Error())
 		}
 		fmt.Fprintf(w, "failure handler called")
 	}

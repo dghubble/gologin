@@ -15,13 +15,13 @@ const (
 )
 
 // WithUser returns a copy of ctx that stores the Google Userinfoplus.
-func WithUser(ctx context.Context, user *google.Userinfoplus) context.Context {
+func WithUser(ctx context.Context, user *google.Userinfo) context.Context {
 	return context.WithValue(ctx, userKey, user)
 }
 
 // UserFromContext returns the Google Userinfoplus from the ctx.
-func UserFromContext(ctx context.Context) (*google.Userinfoplus, error) {
-	user, ok := ctx.Value(userKey).(*google.Userinfoplus)
+func UserFromContext(ctx context.Context) (*google.Userinfo, error) {
+	user, ok := ctx.Value(userKey).(*google.Userinfo)
 	if !ok {
 		return nil, fmt.Errorf("google: Context missing Google User")
 	}
