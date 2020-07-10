@@ -16,9 +16,10 @@ import (
 )
 
 const (
-	sessionName    = "example-google-app"
-	sessionSecret  = "example cookie signing secret"
-	sessionUserKey = "googleID"
+	sessionName     = "example-google-app"
+	sessionSecret   = "example cookie signing secret"
+	sessionUserKey  = "googleID"
+	sessionUsername = "googleName"
 )
 
 // sessionStore encodes and decodes session data stored in signed cookies
@@ -33,8 +34,7 @@ type Config struct {
 // New returns a new ServeMux with app routes.
 func New(config *Config) *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", welcomeHandler)
-	mux.Handle("/profile", requireLogin(http.HandlerFunc(profileHandler)))
+	mux.HandleFunc("/", profileHandler)
 	mux.HandleFunc("/logout", logoutHandler)
 	// 1. Register Login and Callback handlers
 	oauth2Config := &oauth2.Config{
@@ -63,29 +63,24 @@ func issueSession() http.Handler {
 		// 2. Implement a success handler to issue some form of session
 		session := sessionStore.New(sessionName)
 		session.Values[sessionUserKey] = googleUser.Id
+		session.Values[sessionUsername] = googleUser.Name
 		session.Save(w)
 		http.Redirect(w, req, "/profile", http.StatusFound)
 	}
 	return http.HandlerFunc(fn)
 }
 
-// welcomeHandler shows a welcome message and login button.
-func welcomeHandler(w http.ResponseWriter, req *http.Request) {
-	if req.URL.Path != "/" {
-		http.NotFound(w, req)
-		return
-	}
-	if isAuthenticated(req) {
-		http.Redirect(w, req, "/profile", http.StatusFound)
-		return
-	}
-	page, _ := ioutil.ReadFile("home.html")
-	fmt.Fprintf(w, string(page))
-}
-
-// profileHandler shows protected user content.
+// profileHandler shows a personal profile or a login button (unauthenticated).
 func profileHandler(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(w, `<p>You are logged in!</p><form action="/logout" method="post"><input type="submit" value="Logout"></form>`)
+	session, err := sessionStore.Get(req, sessionName)
+	if err != nil {
+		// welcome with login button
+		page, _ := ioutil.ReadFile("home.html")
+		fmt.Fprintf(w, string(page))
+		return
+	}
+	// authenticated profile
+	fmt.Fprintf(w, `<p>You are logged in %s!</p><form action="/logout" method="post"><input type="submit" value="Logout"></form>`, session.Values[sessionUsername])
 }
 
 // logoutHandler destroys the session on POSTs and redirects to home.
@@ -94,26 +89,6 @@ func logoutHandler(w http.ResponseWriter, req *http.Request) {
 		sessionStore.Destroy(w, sessionName)
 	}
 	http.Redirect(w, req, "/", http.StatusFound)
-}
-
-// requireLogin redirects unauthenticated users to the login route.
-func requireLogin(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, req *http.Request) {
-		if !isAuthenticated(req) {
-			http.Redirect(w, req, "/", http.StatusFound)
-			return
-		}
-		next.ServeHTTP(w, req)
-	}
-	return http.HandlerFunc(fn)
-}
-
-// isAuthenticated returns true if the user has a signed session cookie.
-func isAuthenticated(req *http.Request) bool {
-	if _, err := sessionStore.Get(req, sessionName); err == nil {
-		return true
-	}
-	return false
 }
 
 // main creates and starts a Server listening.

@@ -1,32 +1,28 @@
-
 # Google Login
 
 Login with Google allows users to login to any web app with their Google account.
 
-## Web
+## Setup
 
-Package `gologin` provides Go handlers for the Google OAuth2 Authorization flow and for obtaining the Google [Userinfoplus struct](https://godoc.org/google.golang.org/api/oauth2/v2#Userinfoplus).
+Package `gologin` provides Go handlers to perform the Google OAuth2 Authorization flow and for obtaining the Google [Userinfo struct](https://godoc.org/google.golang.org/api/oauth2/v2#Userinfo).
 
-### Getting Started
+```
+git clone https://github.com/dghubble/gologin.git
+cd gologin/examples/github
+```
 
-    go get github.com/dghubble/gologin/google
-    cd $GOPATH/src/github.com/dghubble/gologin/examples/google
-    go get .
-
-## Example App
-
-[main.go](main.go) shows an example web app which uses `gologin` to issue a client-side cookie session. For simplicity, no data is persisted.
-
-Visit [Google Developer Console](https://console.cloud.google.com) under Project, APIs, Credentials to get your OAuth2 client credentials. Add `http://localhost:8080/google/callback` as a valid OAuth2 Redirect URL.
+Obtain a Google OAuth2 application client id and secret from [Google Developer Console](https://console.cloud.google.com). Navigate to APIs & Services, then Credentials. Add `http://localhost:8080/google/callback` as a valid OAuth2 Redirect URL.
 
 <img src="https://storage.googleapis.com/dghubble/google-valid-callback.png">
 
-Compile and run `main.go` from `examples/google`. Pass the client id and secret as arguments to the executable
+## Example App
 
-    go run main.go -client-id=xx -client-secret=yy
-    2015/09/25 23:09:13 Starting Server listening on localhost:8080
+[main.go](main.go) shows an example web app that issues a client-side session cookie. Pass the client id and secret as arguments or set the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` environment variables.
 
-or set the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` environment variables.
+```
+go run main.go -client-id=xx -client-secret=yy
+2015/09/25 23:09:13 Starting Server listening on localhost:8080
+```
 
 Here's what the flow looks like.
 

@@ -1,30 +1,26 @@
-
 # Twitter Login
 
-Login with Twitter allows users to login to any web app or mobile app with their Twitter account.
+Login with Twitter allows users to login to any web app with their Twitter account.
 
-## Web
+## Setup
 
-Package `gologin` provides Go handlers for Twitter which perform the OAuth1 Authorization flow and obtain the Twitter User struct.
+Package `gologin` provides Go handlers to perform the Twitter OAuth1 Authorization flow and obtain the Twitter User struct.
 
-### Getting Started
+```
+git clone https://github.com/dghubble/gologin.git
+cd gologin/examples/github
+```
 
-    go get github.com/dghubble/gologin/twitter
-    cd $GOPATH/src/github.com/dghubble/gologin/examples/twitter
-    go get .
+Obtain a Twitter application consumer key/secret from the [developer portal](https://developer.twitter.com).
 
 ## Example App
 
-[main.go](main.go) shows an example web app which uses `gologin` for Twitter to issue a client-side cookie session. For simplicity, no data is persisted.
+[main.go](main.go) shows an example web app that issues a client-side cookie session. Pass the consumer key/secret as arguments or set the `TWITTER_CONSUMER_KEY` and `TWITTER_CONSUMER_SECRET` environment variables.
 
-Get your Twitter application's consumer key/secret from the [fabric.io](https://fabric.io) dashboard or the [old dashboard](https://apps.twitter.com/).
-
-Compile and run `main.go` from `examples/twitter`. Pass the key/secret as arguments to the executable
-
-    go run main.go -consumer-key=xx -consumer-secret=yy
-    2015/09/25 23:09:13 Starting Server listening on localhost:8080
-
-or set the `TWITTER_CONSUMER_KEY` and `TWITTER_CONSUMER_SECRET` environment variables.
+```
+go run main.go -consumer-key=xx -consumer-secret=yy
+2015/09/25 23:09:13 Starting Server listening on localhost:8080
+```
 
 Here's what the flow looks like.
 
