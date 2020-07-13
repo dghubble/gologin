@@ -1,30 +1,26 @@
-
 # Github Login
 
 Login with Github allows users to login to any web app with their Github account.
 
-## Web
+## Setup
 
-Package `gologin` provides Go handlers for Github which perform the OAuth2 Authorization flow and obtain the Github User struct.
+Package `gologin` provides Go handlers to perform the Github OAuth2 Authorization flow and obtain the Github User struct.
 
-### Getting Started
+```
+git clone https://github.com/dghubble/gologin.git
+cd gologin/examples/github
+```
 
-    go get github.com/dghubble/gologin/github
-    cd $GOPATH/src/github.com/dghubble/gologin/examples/github
-    go get .
+Obtain a Github application client id and secret from [developer settings](https://github.com/settings/developers).
 
 ## Example App
 
-[main.go](main.go) shows an example web app which uses `gologin` for Github to issue a client-side cookie session. For simplicity, no data is persisted.
+[main.go](main.go) shows an example web app that issues a client-side cookie session. Pass the Github client id and secret as arguments or set the `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` environment variables.
 
-Get your Github application's client id and secret from [developer settings](https://github.com/settings/developers).
-
-Compile and run `main.go` from `examples/github`. Pass the client id and secret as arguments to the executable
-
-    go run main.go -client-id=xx -client-secret=yy
-    2015/09/25 23:09:13 Starting Server listening on localhost:8080
-
-or set the `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` environment variables.
+```
+go run main.go -client-id=xx -client-secret=yy
+2015/09/25 23:09:13 Starting Server listening on localhost:8080
+```
 
 Here's what the flow looks like.
 
