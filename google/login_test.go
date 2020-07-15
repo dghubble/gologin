@@ -30,7 +30,7 @@ func TestGoogleHandler(t *testing.T) {
 		ctx := req.Context()
 		googleUser, err := UserFromContext(ctx)
 		assert.Nil(t, err)
-		// assert required fields; Userinfoplus contains other raw response info
+		// assert required fields; Userinfo contains other raw response info
 		assert.Equal(t, expectedUser.Id, googleUser.Id)
 		assert.Equal(t, expectedUser.Id, googleUser.Id)
 		fmt.Fprintf(w, "success handler called")
@@ -39,9 +39,9 @@ func TestGoogleHandler(t *testing.T) {
 
 	// GoogleHandler assert that:
 	// - Token is read from the ctx and passed to the Google API
-	// - google Userinfoplus is obtained from the Google API
+	// - google Userinfo is obtained from the Google API
 	// - success handler is called
-	// - google Userinfoplus is added to the ctx of the success handler
+	// - google Userinfo is added to the ctx of the success handler
 	googleHandler := googleHandler(config, http.HandlerFunc(success), failure)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)

@@ -35,7 +35,7 @@ func LoginHandler(config *oauth2.Config, failure http.Handler) http.Handler {
 }
 
 // CallbackHandler handles Google redirection URI requests and adds the Google
-// access token and Userinfoplus to the ctx. If authentication succeeds,
+// access token and Userinfo to the ctx. If authentication succeeds,
 // handling delegates to the success handler, otherwise to the failure handler.
 func CallbackHandler(config *oauth2.Config, success, failure http.Handler) http.Handler {
 	success = googleHandler(config, success, failure)
@@ -43,7 +43,7 @@ func CallbackHandler(config *oauth2.Config, success, failure http.Handler) http.
 }
 
 // googleHandler is a http.Handler that gets the OAuth2 Token from the ctx
-// to get the corresponding Google Userinfoplus. If successful, the user info
+// to get the corresponding Google Userinfo. If successful, the user info
 // is added to the ctx and the success handler is called. Otherwise, the
 // failure handler is called.
 func googleHandler(config *oauth2.Config, success, failure http.Handler) http.Handler {
@@ -78,7 +78,7 @@ func googleHandler(config *oauth2.Config, success, failure http.Handler) http.Ha
 	return http.HandlerFunc(fn)
 }
 
-// validateResponse returns an error if the given Google Userinfoplus, raw
+// validateResponse returns an error if the given Google Userinfo, raw
 // http.Response, or error are unexpected. Returns nil if they are valid.
 func validateResponse(user *google.Userinfo, err error) error {
 	if err != nil {

@@ -9,10 +9,10 @@ import (
 )
 
 func TestContextUser(t *testing.T) {
-	expectedUserinfoplus := &google.Userinfo{Id: "42", Name: "Google User"}
-	ctx := WithUser(context.Background(), expectedUserinfoplus)
+	expectedUserinfo := &google.Userinfo{Id: "42", Name: "Google User"}
+	ctx := WithUser(context.Background(), expectedUserinfo)
 	user, err := UserFromContext(ctx)
-	assert.Equal(t, expectedUserinfoplus, user)
+	assert.Equal(t, expectedUserinfo, user)
 	assert.Nil(t, err)
 }
 

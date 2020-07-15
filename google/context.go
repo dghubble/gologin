@@ -14,12 +14,12 @@ const (
 	userKey key = iota
 )
 
-// WithUser returns a copy of ctx that stores the Google Userinfoplus.
+// WithUser returns a copy of ctx that stores the Google Userinfo.
 func WithUser(ctx context.Context, user *google.Userinfo) context.Context {
 	return context.WithValue(ctx, userKey, user)
 }
 
-// UserFromContext returns the Google Userinfoplus from the ctx.
+// UserFromContext returns the Google Userinfo from the ctx.
 func UserFromContext(ctx context.Context) (*google.Userinfo, error) {
 	user, ok := ctx.Value(userKey).(*google.Userinfo)
 	if !ok {

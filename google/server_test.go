@@ -9,7 +9,7 @@ import (
 )
 
 // newGoogleTestServer returns a new httptest.Server which mocks the Google
-// Userinfoplus endpoint and a client which proxies requests to the server.
+// Userinfo endpoint and a client which proxies requests to the server.
 // The server responds with the given json data. The caller must close the
 // server.
 func newGoogleTestServer(jsonData string) (*http.Client, *httptest.Server) {
