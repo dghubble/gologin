@@ -80,7 +80,7 @@ func googleHandler(config *oauth2.Config, success, failure http.Handler) http.Ha
 
 // validateResponse returns an error if the given Google Userinfoplus, raw
 // http.Response, or error are unexpected. Returns nil if they are valid.
-func validateResponse(user *google.Userinfoplus, err error) error {
+func validateResponse(user *google.Userinfo, err error) error {
 	if err != nil {
 		return ErrUnableToGetGoogleUser
 	}
