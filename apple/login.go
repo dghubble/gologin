@@ -99,6 +99,19 @@ func ClientSecret(pkey []byte, expSecs int64, keyID string, teamID string, clien
 	return token.SignedString(key)
 }
 
+// CacheAppleKeys fetches and caches Apple's public keys.
+// Returns error on failure or nil on success.
+// You can call this from e.g., program start to pre-fetch and cache the keys
+// for later validation. If you do not pre-fetch, then the fetch will happen
+// automatically the first time that a key validation is done.
+func CacheAppleKeys() error {
+	keys, err := cacheApplePKeys()
+	if err == nil {
+		applePublicKeys = keys
+	}
+	return err
+}
+
 // StateHandler checks for a state cookie. If found, the state value is read
 // and added to the ctx. Otherwise, a non-guessable value is added to the ctx
 // and to a (short-lived) state cookie issued to the requester.
