@@ -8,7 +8,7 @@ Package `gologin` provides Go handlers to perform the Twitter OAuth1 Authorizati
 
 ```
 git clone https://github.com/dghubble/gologin.git
-cd gologin/examples/github
+cd gologin/examples/twitter
 ```
 
 Obtain a Twitter application consumer key/secret from the [developer portal](https://developer.twitter.com).
