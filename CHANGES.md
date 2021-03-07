@@ -4,6 +4,11 @@ Notable changes between releases.
 
 ## Latest
 
+## v2.3.0
+
+* Update `google.golang.org/api` to v0.22.0 ([#40](https://github.com/dghubble/gologin/pull/40))
+  * Google API renamed `Userinfoplus` to `Userinfo`
+
 ## v2.2.0
 
 * Suffix packages with `/v2` to provide Go module support ([#37](https://github.com/dghubble/gologin/pull/37))
