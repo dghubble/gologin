@@ -33,3 +33,15 @@ Here's what the flow looks like.
 3. The success `http.Handler` is called with a `Context` which contains the Github Token and verified Github User struct.
 4. In this example, that User is read and used to issue a signed cookie session.
 
+### Retrieving the access token
+
+To retrieve the access token for further calls to the GitHub API use the lower level `oauth2` module with the `Context` object:
+```
+import (
+  oauth2Login "github.com/dghubble/gologin/v2/oauth2"
+)
+
+...
+
+token, err := oauth2Login.TokenFromContext(ctx)
+```
