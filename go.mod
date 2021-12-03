@@ -8,6 +8,6 @@ require (
 	github.com/dghubble/sling v1.4.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/oauth2 v0.0.0-20211005180243-6b3c2da341f1
-	google.golang.org/api v0.60.0
+	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
+	google.golang.org/api v0.61.0
 )
