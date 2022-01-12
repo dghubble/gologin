@@ -14,6 +14,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	expectedOAuth1Error = "oauth1: invalid status 500: OAuth1 Server Error\n"
+)
+
 // LoginHandler
 
 func TestLoginHandler(t *testing.T) {
@@ -68,7 +72,7 @@ func TestLoginHandler_RequestTokenError(t *testing.T) {
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			// first validation in OAuth1 impl failed
-			assert.Equal(t, "oauth1: Server returned status 500", err.Error())
+			assert.Equal(t, expectedOAuth1Error, err.Error())
 		}
 		fmt.Fprintf(w, "failure handler called")
 	}
@@ -254,7 +258,7 @@ func TestCallbackHandler_AccessTokenError(t *testing.T) {
 		err := gologin.ErrorFromContext(ctx)
 		if assert.NotNil(t, err) {
 			// first validation in OAuth1 impl failed
-			assert.Equal(t, "oauth1: Server returned status 500", err.Error())
+			assert.Equal(t, expectedOAuth1Error, err.Error())
 		}
 		fmt.Fprintf(w, "failure handler called")
 	}
