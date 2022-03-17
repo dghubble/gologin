@@ -42,6 +42,32 @@ func TestLoginHandler(t *testing.T) {
 	assert.Equal(t, expectedRedirect, w.HeaderMap.Get("Location"))
 }
 
+func TestLoginHandler_WithAuthCodeOptions(t *testing.T) {
+	expectedState := "state_val"
+	expectedRedirect := "https://api.example.com/authorize?client_id=client_id&prompt=select_account&redirect_uri=redirect_url&response_type=code&state=state_val"
+	config := &oauth2.Config{
+		ClientID:     "client_id",
+		ClientSecret: "client_secret",
+		RedirectURL:  "redirect_url",
+		Endpoint: oauth2.Endpoint{
+			AuthURL: "https://api.example.com/authorize",
+		},
+	}
+	failure := testutils.AssertFailureNotCalled(t)
+
+	// LoginHandler assert that:
+	// - redirects to the oauth2.Config AuthURL
+	// - redirect status code is 302
+	// - redirect url is the OAuth2 Config RedirectURL with the ClientID and ctx state
+	loginHandler := LoginHandler(config, failure, oauth2.SetAuthURLParam("prompt", "select_account"))
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/", nil)
+	ctx := WithState(context.Background(), expectedState)
+	loginHandler.ServeHTTP(w, req.WithContext(ctx))
+	assert.Equal(t, http.StatusFound, w.Code)
+	assert.Equal(t, expectedRedirect, w.HeaderMap.Get("Location"))
+}
+
 func TestLoginHandler_MissingCtxState(t *testing.T) {
 	config := &oauth2.Config{}
 	failure := func(w http.ResponseWriter, req *http.Request) {

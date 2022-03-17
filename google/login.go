@@ -30,8 +30,8 @@ func StateHandler(config gologin.CookieConfig, success http.Handler) http.Handle
 
 // LoginHandler handles Google login requests by reading the state value from
 // the ctx and redirecting requests to the AuthURL with that state value.
-func LoginHandler(config *oauth2.Config, failure http.Handler) http.Handler {
-	return oauth2Login.LoginHandler(config, failure)
+func LoginHandler(config *oauth2.Config, failure http.Handler, authCodeOptions ...oauth2.AuthCodeOption) http.Handler {
+	return oauth2Login.LoginHandler(config, failure, authCodeOptions...)
 }
 
 // CallbackHandler handles Google redirection URI requests and adds the Google
