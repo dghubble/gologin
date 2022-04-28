@@ -1,7 +1,5 @@
-export GO111MODULE=on
-
 .PHONY: all
-all: test vet lint fmt
+all: test vet fmt
 
 .PHONY: test
 test:
@@ -10,10 +8,6 @@ test:
 .PHONY: vet
 vet:
 	@go vet -all $$(go list ./... | grep -v examples)
-
-.PHONY: lint
-lint:
-	@golint -set_exit_status ./...
 
 .PHONY: fmt
 fmt:
