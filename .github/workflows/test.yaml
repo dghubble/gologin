@@ -2,10 +2,8 @@ name: test
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
-    branches:
-      - master
 jobs:
   build:
     name: go
@@ -13,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ['1.17', '1.18']
+        go: ['1.17', '1.18', '1.19']
     steps:
       - name: setup
         uses: actions/setup-go@v3
