@@ -4,6 +4,11 @@ Notable changes between releases.
 
 ## Latest
 
+* Add `SameSite` field to the oauth2 state `CookieConfig` ([#112](https://github.com/dghubble/gologin/pull/112))
+  * Set `SameSiteLaxMode` in `DefaultCookieConfig` and `DebugOnlyCookieConfig`
+* Raise the `MaxAge` in `DefaultCookieConfig` and `DebugOnlyCookieConfig`
+  * Allow 10 min for users to complete the authorization flow
+
 ## v2.3.1
 
 * Update minimum Go version from v1.17 to v1.18 ([#116](https://github.com/dghubble/gologin/pull/116))

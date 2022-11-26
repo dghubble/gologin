@@ -21,6 +21,7 @@ func NewCookie(config gologin.CookieConfig, value string) *http.Cookie {
 		MaxAge:   config.MaxAge,
 		HttpOnly: config.HTTPOnly,
 		Secure:   config.Secure,
+		SameSite: config.SameSite,
 	}
 	// IE <9 does not understand MaxAge, set Expires if MaxAge is non-zero.
 	if expires, ok := expiresTime(config.MaxAge); ok {

@@ -1,5 +1,7 @@
 package gologin
 
+import "net/http"
+
 // CookieConfig configures http.Cookie creation.
 type CookieConfig struct {
 	// Name is the desired cookie name.
@@ -21,15 +23,19 @@ type CookieConfig struct {
 	// Secure flag indicating to the browser that the cookie should only be
 	// transmitted over a TLS HTTPS connection. Recommended true in production.
 	Secure bool
+	// SameSite attribute modes indicates that a browser not send a cookie in
+	// cross-site requests.
+	SameSite http.SameSite
 }
 
 // DefaultCookieConfig configures short-lived temporary http.Cookie creation.
 var DefaultCookieConfig = CookieConfig{
 	Name:     "gologin-temporary-cookie",
 	Path:     "/",
-	MaxAge:   60, // 60 seconds
+	MaxAge:   600, // 10 min
 	HTTPOnly: true,
 	Secure:   true, // HTTPS only
+	SameSite: http.SameSiteLaxMode,
 }
 
 // DebugOnlyCookieConfig configures creation of short-lived temporary
@@ -38,7 +44,8 @@ var DefaultCookieConfig = CookieConfig{
 var DebugOnlyCookieConfig = CookieConfig{
 	Name:     "gologin-temporary-cookie",
 	Path:     "/",
-	MaxAge:   60, // 60 seconds
+	MaxAge:   600, // 10 min
 	HTTPOnly: true,
 	Secure:   false, // allows cookies to be send over HTTP
+	SameSite: http.SameSiteLaxMode,
 }
