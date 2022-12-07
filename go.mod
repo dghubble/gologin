@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/dghubble/go-twitter v0.0.0-20210609183100-2fdbf421508e
-	github.com/dghubble/oauth1 v0.7.1
+	github.com/dghubble/oauth1 v0.7.2
 	github.com/dghubble/sling v1.4.0
 	github.com/google/go-github/v41 v41.0.0
 	github.com/stretchr/testify v1.8.1
