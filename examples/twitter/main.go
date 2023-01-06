@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -22,7 +21,7 @@ const (
 )
 
 // sessionStore encodes and decodes session data stored in signed cookies
-var sessionStore = sessions.NewCookieStore([]byte(sessionSecret), nil)
+var sessionStore = sessions.NewCookieStore(sessions.DebugCookieConfig, []byte(sessionSecret), nil)
 
 // Config configures the main ServeMux.
 type Config struct {
@@ -58,9 +57,12 @@ func issueSession() http.Handler {
 		}
 		// 2. Implement a success handler to issue some form of session
 		session := sessionStore.New(sessionName)
-		session.Values[sessionUserKey] = twitterUser.ID
-		session.Values[sessionUsername] = twitterUser.ScreenName
-		session.Save(w)
+		session.Set(sessionUserKey, twitterUser.ID)
+		session.Set(sessionUsername, twitterUser.ScreenName)
+		if err := session.Save(w); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		http.Redirect(w, req, "/profile", http.StatusFound)
 	}
 	return http.HandlerFunc(fn)
@@ -70,13 +72,13 @@ func issueSession() http.Handler {
 func profileHandler(w http.ResponseWriter, req *http.Request) {
 	session, err := sessionStore.Get(req, sessionName)
 	if err != nil {
-		page, _ := ioutil.ReadFile("home.html")
-		fmt.Fprintf(w, string(page))
+		page, _ := os.ReadFile("home.html")
+		fmt.Fprint(w, string(page))
 		return
 	}
 
 	// authenticated profile
-	fmt.Fprintf(w, `<p>You are logged in %s!</p><form action="/logout" method="post"><input type="submit" value="Logout"></form>`, session.Values[sessionUsername])
+	fmt.Fprintf(w, `<p>You are logged in %s!</p><form action="/logout" method="post"><input type="submit" value="Logout"></form>`, session.Get(sessionUsername))
 }
 
 // logoutHandler destroys the session on POSTs and redirects to home.

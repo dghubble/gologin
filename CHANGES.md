@@ -7,7 +7,7 @@ Notable changes between releases.
 ## v2.3.1
 
 * Update minimum Go version from v1.17 to v1.18 ([#116](https://github.com/dghubble/gologin/pull/116))
-* Upgrade github.com/google/go-github from non-module versiont to v48.1.0
+* Upgrade github.com/google/go-github from non-module version to v48.1.0
 * Update google.golang.org/api, sling, oauth1, and test dependencies (dependabot)
 
 ## v2.3.0
