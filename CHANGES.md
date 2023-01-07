@@ -4,10 +4,13 @@ Notable changes between releases.
 
 ## Latest
 
+## v2.4.0
+
 * Add `SameSite` field to the oauth2 state `CookieConfig` ([#112](https://github.com/dghubble/gologin/pull/112))
   * Set `SameSiteLaxMode` in `DefaultCookieConfig` and `DebugOnlyCookieConfig`
 * Raise the `MaxAge` in `DefaultCookieConfig` and `DebugOnlyCookieConfig`
   * Allow 10 min for users to complete the authorization flow
+* Update examples to show sessions with typed values ([#123](https://github.com/dghubble/gologin/pull/123))
 
 ## v2.3.1
 

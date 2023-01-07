@@ -1,4 +1,8 @@
-# gologin [![GoDoc](https://pkg.go.dev/badge/github.com/dghubble/gologin.svg)](https://pkg.go.dev/github.com/dghubble/gologin) [![Workflow](https://github.com/dghubble/gologin/actions/workflows/test.yaml/badge.svg)](https://github.com/dghubble/gologin/actions/workflows/test.yaml?query=branch%3Amain) [![Sponsors](https://img.shields.io/github/sponsors/dghubble?logo=github)](https://github.com/sponsors/dghubble) [![Mastodon](https://img.shields.io/badge/follow-news-6364ff?logo=mastodon)](https://fosstodon.org/@typhoon)
+# gologin
+[![GoDoc](https://pkg.go.dev/badge/github.com/dghubble/gologin.svg)](https://pkg.go.dev/github.com/dghubble/gologin)
+[![Workflow](https://github.com/dghubble/gologin/actions/workflows/test.yaml/badge.svg)](https://github.com/dghubble/gologin/actions/workflows/test.yaml?query=branch%3Amain)
+[![Sponsors](https://img.shields.io/github/sponsors/dghubble?logo=github)](https://github.com/sponsors/dghubble)
+[![Mastodon](https://img.shields.io/badge/follow-news-6364ff?logo=mastodon)](https://fosstodon.org/@dghubble)
 
 <img align="right" src="https://storage.googleapis.com/dghubble/gologin.png">
 
@@ -15,10 +19,6 @@ See [examples](examples) for tutorials with apps you can run from the command li
 * Obtain the user or access token from the `context`
 * Configurable OAuth 2 state parameter handling (CSRF protection)
 * Configurable OAuth 1 request secret handling
-
-## Install
-
-    go get github.com/dghubble/gologin
 
 ## Docs
 
@@ -39,6 +39,15 @@ Let's walk through Github and Twitter web login examples.
 Register the `LoginHandler` and `CallbackHandler` on your `http.ServeMux`.
 
 ```go
+import (
+    ...
+    "github.com/dghubble/gologin/v2"
+	"github.com/dghubble/gologin/v2/github"
+	"golang.org/x/oauth2"
+	githubOAuth2 "golang.org/x/oauth2/github"
+)
+...
+
 config := &oauth2.Config{
     ClientID:     "GithubClientID",
     ClientSecret: "GithubClientSecret",

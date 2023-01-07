@@ -20,8 +20,8 @@ github.com/dghubble/gologin/v2 v2.3.1 h1:4E3JJ92UHQ5VSufbCmLwkbKhCd9Ffe/oIPnIrly
 github.com/dghubble/gologin/v2 v2.3.1/go.mod h1:CpUtWNSne5noIBfYWCyA0G/1aTdjV6+7hKZaNb6owaI=
 github.com/dghubble/oauth1 v0.7.2 h1:pwcinOZy8z6XkNxvPmUDY52M7RDPxt0Xw1zgZ6Cl5JA=
 github.com/dghubble/oauth1 v0.7.2/go.mod h1:9erQdIhqhOHG/7K9s/tgh9Ks/AfoyrO5mW/43Lu2+kE=
-github.com/dghubble/sessions v0.3.0 h1:kuPH18gk0e8FrD+98rIKAfL8cu5id5yRb5tof2wnkCM=
-github.com/dghubble/sessions v0.3.0/go.mod h1:MhijRC0x35DdMcBzVaPCvIvlSEiGg0a6L8Ra1VsHoFw=
+github.com/dghubble/sessions v0.4.0 h1:DcAlR3HGxoKdxXRhU0I3lHNhrJ3HnP6fmpZ5lCnTHkM=
+github.com/dghubble/sessions v0.4.0/go.mod h1:MhijRC0x35DdMcBzVaPCvIvlSEiGg0a6L8Ra1VsHoFw=
 github.com/dghubble/sling v1.4.1 h1:AxjTubpVyozMvbBCtXcsWEyGGgUZutC5YGrfxPNVOcQ=
 github.com/dghubble/sling v1.4.1/go.mod h1:QoMB1KL3GAo+7HsD8Itd6S+6tW91who8BGZzuLvpOyc=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=

@@ -22,7 +22,7 @@ const (
 )
 
 // sessionStore encodes and decodes session data stored in signed cookies
-var sessionStore = sessions.NewCookieStore(sessions.DebugCookieConfig, []byte(sessionSecret), nil)
+var sessionStore = sessions.NewCookieStore[string](sessions.DebugCookieConfig, []byte(sessionSecret), nil)
 
 // Config configures the main ServeMux.
 type Config struct {

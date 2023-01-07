@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/dghubble/gologin/v2 v2.3.1
 	github.com/dghubble/oauth1 v0.7.2
-	github.com/dghubble/sessions v0.3.0
+	github.com/dghubble/sessions v0.4.0
 	golang.org/x/oauth2 v0.4.0
 )
 
