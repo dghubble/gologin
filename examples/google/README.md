@@ -8,7 +8,7 @@ Package `gologin` provides Go handlers to perform the Google OAuth2 Authorizatio
 
 ```
 git clone https://github.com/dghubble/gologin.git
-cd gologin/examples/github
+cd gologin/examples/google
 ```
 
 Obtain a Google OAuth2 application client id and secret from [Google Developer Console](https://console.cloud.google.com). Navigate to APIs & Services, then Credentials. Add `http://localhost:8080/google/callback` as a valid OAuth2 Redirect URL.
