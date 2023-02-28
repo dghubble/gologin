@@ -1,6 +1,6 @@
 module github.com/dghubble/gologin/v2
 
-go 1.18
+go 1.19
 
 require (
 	github.com/dghubble/go-twitter v0.0.0-20221104224141-912508c3888b

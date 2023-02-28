@@ -1,6 +1,6 @@
 module github.com/dghubble/gologin/v2/examples
 
-go 1.18
+go 1.19
 
 require (
 	github.com/dghubble/gologin/v2 v2.4.0
