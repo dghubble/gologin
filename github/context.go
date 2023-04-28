@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/go-github/v48/github"
+	"github.com/google/go-github/v52/github"
 )
 
 // unexported key type prevents collisions
