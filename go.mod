@@ -9,7 +9,7 @@ require (
 	github.com/google/go-github/v52 v52.0.0
 	github.com/stretchr/testify v1.8.2
 	golang.org/x/oauth2 v0.7.0
-	google.golang.org/api v0.121.0
+	google.golang.org/api v0.122.0
 )
 
 require (
