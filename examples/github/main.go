@@ -41,6 +41,8 @@ func New(config *Config) *http.ServeMux {
 		ClientSecret: config.GithubClientSecret,
 		RedirectURL:  "http://localhost:8080/github/callback",
 		Endpoint:     githubOAuth2.Endpoint,
+		// https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps
+		Scopes: []string{"user:email"},
 	}
 	// state param cookies require HTTPS by default; disable for localhost development
 	stateConfig := gologin.DebugOnlyCookieConfig
@@ -57,6 +59,12 @@ func issueSession() http.Handler {
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
+		}
+		log.Printf("## in issueSession.  githubUser: %+v \n", *githubUser)
+		if githubUser.Email != nil {
+			log.Printf("## in issueSession.  githubUser Email: %+v \n", *githubUser.Email)
+		} else {
+			log.Println("## in issueSession.  githubUser Email is empty")
 		}
 		// 2. Implement a success handler to issue some form of session
 		session := sessionStore.New(sessionName)
@@ -77,6 +85,9 @@ func profileHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		// welcome with login button
 		page, _ := os.ReadFile("home.html")
+		if err != nil {
+			log.Printf("## in profileHandler, error doing  os.ReadFile(home.html) : %v ", err)
+		}
 		fmt.Fprint(w, string(page))
 		return
 	}

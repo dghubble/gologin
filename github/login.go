@@ -3,6 +3,7 @@ package github
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -90,6 +91,19 @@ func githubHandler(config *oauth2.Config, isEnterprise bool, success, failure ht
 			return
 		}
 		ctx = WithUser(ctx, user)
+
+		userEmails, resp, err := githubClient.Users.ListEmails(ctx, nil)
+		// if oauth2.Config.Scopes does not contain "user:email" the route user/emails will get a 404 status
+		if err != nil && resp.StatusCode != http.StatusNotFound {
+			log.Printf("githubHandler got an error trying githubClient.Users.ListEmails : %v", err)
+			ctx = gologin.WithError(ctx, err)
+			failure.ServeHTTP(w, req.WithContext(ctx))
+			return
+		}
+		if len(userEmails) > 0 && resp.StatusCode != http.StatusNotFound {
+			user.Email = userEmails[0].Email
+		}
+
 		success.ServeHTTP(w, req.WithContext(ctx))
 	}
 	return http.HandlerFunc(fn)
