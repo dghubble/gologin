@@ -12,9 +12,9 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// Github login errors
+// GitHub login errors
 var (
-	ErrUnableToGetGithubUser = errors.New("github: unable to get Github User")
+	ErrUnableToGetGithubUser = errors.New("github: unable to get GitHub User")
 )
 
 // StateHandler checks for a state cookie. If found, the state value is read
@@ -29,13 +29,13 @@ func StateHandler(config gologin.CookieConfig, success http.Handler) http.Handle
 	return oauth2Login.StateHandler(config, success)
 }
 
-// LoginHandler handles Github login requests by reading the state value from
+// LoginHandler handles GitHub login requests by reading the state value from
 // the ctx and redirecting requests to the AuthURL with that state value.
 func LoginHandler(config *oauth2.Config, failure http.Handler) http.Handler {
 	return oauth2Login.LoginHandler(config, failure)
 }
 
-// CallbackHandler handles Github redirection URI requests and adds the Github
+// CallbackHandler handles GitHub redirection URI requests and adds the GitHub
 // access token and User to the ctx. If authentication succeeds, handling
 // delegates to the success handler, otherwise to the failure handler.
 func CallbackHandler(config *oauth2.Config, success, failure http.Handler) http.Handler {
@@ -43,10 +43,10 @@ func CallbackHandler(config *oauth2.Config, success, failure http.Handler) http.
 	return oauth2Login.CallbackHandler(config, success, failure)
 }
 
-// EnterpriseCallbackHandler handles Github Enterprise redirection URI requests
-// and adds the Github access token and User to the ctx. If authentication
+// EnterpriseCallbackHandler handles GitHub Enterprise redirection URI requests
+// and adds the GitHub access token and User to the ctx. If authentication
 // succeeds,handling delegates to the success handler, otherwise to the failure
-// handler. The Github Enterprise API URL is inferred from the OAuth2 config's
+// handler. The GitHub Enterprise API URL is inferred from the OAuth2 config's
 // AuthURL endpoint.
 func EnterpriseCallbackHandler(config *oauth2.Config, success, failure http.Handler) http.Handler {
 	success = githubHandler(config, true, success, failure)
@@ -54,7 +54,7 @@ func EnterpriseCallbackHandler(config *oauth2.Config, success, failure http.Hand
 }
 
 // githubHandler is a http.Handler that gets the OAuth2 Token from the ctx to
-// get the corresponding Github User. If successful, the User is added to the
+// get the corresponding GitHub User. If successful, the User is added to the
 // ctx and the success handler is called. Otherwise, the failure handler is
 // called.
 func githubHandler(config *oauth2.Config, isEnterprise bool, success, failure http.Handler) http.Handler {
@@ -95,7 +95,7 @@ func githubHandler(config *oauth2.Config, isEnterprise bool, success, failure ht
 	return http.HandlerFunc(fn)
 }
 
-// validateResponse returns an error if the given Github user, raw
+// validateResponse returns an error if the given GitHub user, raw
 // http.Response, or error are unexpected. Returns nil if they are valid.
 func validateResponse(user *github.User, resp *github.Response, err error) error {
 	if err != nil || resp.StatusCode != http.StatusOK {
@@ -107,7 +107,7 @@ func validateResponse(user *github.User, resp *github.Response, err error) error
 	return nil
 }
 
-// enterpriseGithubClientFromAuthURL returns a Github client that targets a GHE instance.
+// enterpriseGithubClientFromAuthURL returns a GitHub client that targets a GHE instance.
 func enterpriseGithubClientFromAuthURL(authURL string, httpClient *http.Client) (*github.Client, error) {
 	client := github.NewClient(httpClient)
 

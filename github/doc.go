@@ -1,2 +1,2 @@
-// Package github provides Github OAuth2 login and callback handlers.
+// Package github provides GitHub OAuth2 login and callback handlers.
 package github

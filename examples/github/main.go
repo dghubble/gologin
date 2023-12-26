@@ -49,7 +49,7 @@ func New(config *Config) *http.ServeMux {
 	return mux
 }
 
-// issueSession issues a cookie session after successful Github login
+// issueSession issues a cookie session after successful GitHub login
 func issueSession() http.Handler {
 	fn := func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
@@ -101,8 +101,8 @@ func main() {
 		GithubClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
 	}
 	// allow consumer credential flags to override config fields
-	clientID := flag.String("client-id", "", "Github Client ID")
-	clientSecret := flag.String("client-secret", "", "Github Client Secret")
+	clientID := flag.String("client-id", "", "GitHub Client ID")
+	clientSecret := flag.String("client-secret", "", "GitHub Client Secret")
 	flag.Parse()
 	if *clientID != "" {
 		config.GithubClientID = *clientID
@@ -111,10 +111,10 @@ func main() {
 		config.GithubClientSecret = *clientSecret
 	}
 	if config.GithubClientID == "" {
-		log.Fatal("Missing Github Client ID")
+		log.Fatal("Missing GitHub Client ID")
 	}
 	if config.GithubClientSecret == "" {
-		log.Fatal("Missing Github Client Secret")
+		log.Fatal("Missing GitHub Client Secret")
 	}
 
 	log.Printf("Starting Server listening on %s\n", address)

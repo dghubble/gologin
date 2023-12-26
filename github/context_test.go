@@ -11,7 +11,7 @@ import (
 func TestContextUser(t *testing.T) {
 	expectedUser := &github.User{
 		ID:   github.Int64(917408),
-		Name: github.String("Github User"),
+		Name: github.String("GitHub User"),
 	}
 	ctx := WithUser(context.Background(), expectedUser)
 	user, err := UserFromContext(ctx)
@@ -23,6 +23,6 @@ func TestContextUser_Error(t *testing.T) {
 	user, err := UserFromContext(context.Background())
 	assert.Nil(t, user)
 	if assert.NotNil(t, err) {
-		assert.Equal(t, "github: Context missing Github User", err.Error())
+		assert.Equal(t, "github: Context missing GitHub User", err.Error())
 	}
 }
