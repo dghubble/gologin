@@ -108,7 +108,7 @@ func TestAuthRedirectHandler(t *testing.T) {
 	ctx := WithRequestToken(context.Background(), requestToken, "")
 	authRedirectHandler.ServeHTTP(w, req.WithContext(ctx))
 	assert.Equal(t, http.StatusFound, w.Code)
-	assert.Equal(t, expectedRedirect, w.HeaderMap.Get("Location"))
+	assert.Equal(t, expectedRedirect, w.Result().Header.Get("Location"))
 }
 
 func TestAuthRedirectHandler_MissingCtxRequestToken(t *testing.T) {

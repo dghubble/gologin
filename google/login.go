@@ -8,6 +8,7 @@ import (
 	oauth2Login "github.com/dghubble/gologin/v2/oauth2"
 	"golang.org/x/oauth2"
 	google "google.golang.org/api/oauth2/v2"
+	"google.golang.org/api/option"
 )
 
 // Google login errors
@@ -59,7 +60,7 @@ func googleHandler(config *oauth2.Config, success, failure http.Handler) http.Ha
 			return
 		}
 		httpClient := config.Client(ctx, token)
-		googleService, err := google.New(httpClient)
+		googleService, err := google.NewService(ctx, option.WithHTTPClient(httpClient))
 		if err != nil {
 			ctx = gologin.WithError(ctx, err)
 			failure.ServeHTTP(w, req.WithContext(ctx))

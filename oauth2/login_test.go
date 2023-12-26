@@ -39,7 +39,7 @@ func TestLoginHandler(t *testing.T) {
 	ctx := WithState(context.Background(), expectedState)
 	loginHandler.ServeHTTP(w, req.WithContext(ctx))
 	assert.Equal(t, http.StatusFound, w.Code)
-	assert.Equal(t, expectedRedirect, w.HeaderMap.Get("Location"))
+	assert.Equal(t, expectedRedirect, w.Result().Header.Get("Location"))
 }
 
 func TestLoginHandler_MissingCtxState(t *testing.T) {

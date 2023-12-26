@@ -3,7 +3,6 @@ package testutils
 
 import (
 	"io"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -29,7 +28,7 @@ func AssertFailureNotCalled(t *testing.T) http.Handler {
 // AssertBodyString asserts that a Request Body matches the expected string.
 func AssertBodyString(t *testing.T, rc io.ReadCloser, expected string) {
 	defer rc.Close()
-	if b, err := ioutil.ReadAll(rc); err == nil {
+	if b, err := io.ReadAll(rc); err == nil {
 		if string(b) != expected {
 			t.Errorf("expected %q, got %q", expected, string(b))
 		}
