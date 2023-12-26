@@ -6,7 +6,7 @@
 
 <img align="right" src="https://storage.googleapis.com/dghubble/gologin.png">
 
-Package `gologin` provides chainable login `http.Handler`'s for [Google](http://godoc.org/github.com/dghubble/gologin/google), [Github](http://godoc.org/github.com/dghubble/gologin/github), [Twitter](http://godoc.org/github.com/dghubble/gologin/twitter), [Facebook](http://godoc.org/github.com/dghubble/gologin/facebook), [Bitbucket](http://godoc.org/github.com/dghubble/gologin/bitbucket), [Tumblr](http://godoc.org/github.com/dghubble/gologin/tumblr), or any [OAuth1](http://godoc.org/github.com/dghubble/gologin/oauth1) or [OAuth2](http://godoc.org/github.com/dghubble/gologin/oauth2) authentication providers.
+Package `gologin` provides chainable login `http.Handler`'s for [Google](http://godoc.org/github.com/dghubble/gologin/google), [GitHub](http://godoc.org/github.com/dghubble/gologin/github), [Twitter](http://godoc.org/github.com/dghubble/gologin/twitter), [Facebook](http://godoc.org/github.com/dghubble/gologin/facebook), [Bitbucket](http://godoc.org/github.com/dghubble/gologin/bitbucket), [Tumblr](http://godoc.org/github.com/dghubble/gologin/tumblr), or any [OAuth1](http://godoc.org/github.com/dghubble/gologin/oauth1) or [OAuth2](http://godoc.org/github.com/dghubble/gologin/oauth2) authentication providers.
 
 Choose a subpackage. Register the `LoginHandler` and `CallbackHandler` for web logins or the `TokenHandler` for (mobile) token logins. Get the authenticated user or access token from the request `context`.
 
@@ -30,11 +30,11 @@ Package `gologin` provides `http.Handler`'s which can be chained together to imp
 
 ## Usage
 
-Choose a subpackage such as `github` or `twitter`. `LoginHandler` and `Callback` `http.Handler`'s chain together lower level `oauth1` or `oauth2` handlers to authenticate users and fetch the Github or Twitter `User`, before calling your `success` `http.Handler`.
+Choose a subpackage such as `github` or `twitter`. `LoginHandler` and `Callback` `http.Handler`'s chain together lower level `oauth1` or `oauth2` handlers to authenticate users and fetch the GitHub or Twitter `User`, before calling your `success` `http.Handler`.
 
-Let's walk through Github and Twitter web login examples.
+Let's walk through GitHub and Twitter web login examples.
 
-### Github OAuth2
+### GitHub OAuth2
 
 Register the `LoginHandler` and `CallbackHandler` on your `http.ServeMux`.
 
@@ -64,11 +64,11 @@ The `StateHandler` checks for an OAuth2 state parameter cookie, generates a non-
 
 The `github` `LoginHandler` reads the state from the ctx and redirects to the AuthURL (at github.com) to prompt the user to grant access. Passing nil for the `failure` handler just means the `DefaultFailureHandler` should be used, which reports errors. ([info](#failure-handlers))
 
-The `github` `CallbackHandler` receives an auth code and state OAuth2 redirection, validates the state against the state in the ctx, and exchanges the auth code for an OAuth2 Token. The `github` CallbackHandler wraps the lower level `oauth2` `CallbackHandler` to further use the Token to obtain the Github `User` before calling through to the success or failure handlers.
+The `github` `CallbackHandler` receives an auth code and state OAuth2 redirection, validates the state against the state in the ctx, and exchanges the auth code for an OAuth2 Token. The `github` CallbackHandler wraps the lower level `oauth2` `CallbackHandler` to further use the Token to obtain the GitHub `User` before calling through to the success or failure handlers.
 
 <img src="https://storage.googleapis.com/dghubble/gologin-github.png">
 
-Next, write the success `http.Handler` to do something with the Token and Github User added to the `ctx`.
+Next, write the success `http.Handler` to do something with the Token and GitHub User added to the `ctx`.
 
 ```go
 func issueSession() http.Handler {
@@ -82,7 +82,7 @@ func issueSession() http.Handler {
 }
 ```
 
-See the [Github tutorial](examples/github) for a web app you can run from the command line.
+See the [GitHub tutorial](examples/github) for a web app you can run from the command line.
 
 ### Twitter OAuth1
 

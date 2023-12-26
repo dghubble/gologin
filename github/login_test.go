@@ -37,8 +37,8 @@ func TestGithubHandler(t *testing.T) {
 	failure := testutils.AssertFailureNotCalled(t)
 
 	// GithubHandler assert that:
-	// - Token is read from the ctx and passed to the Github API
-	// - github User is obtained from the Github API
+	// - Token is read from the ctx and passed to the GitHub API
+	// - github User is obtained from the GitHub API
 	// - success handler is called
 	// - github User is added to the ctx of the success handler
 	githubHandler := githubHandler(config, false, http.HandlerFunc(success), failure)
@@ -71,7 +71,7 @@ func TestGithubHandler_MissingCtxToken(t *testing.T) {
 }
 
 func TestGithubHandler_ErrorGettingUser(t *testing.T) {
-	proxyClient, server := testutils.NewErrorServer("Github Service Down", http.StatusInternalServerError)
+	proxyClient, server := testutils.NewErrorServer("GitHub Service Down", http.StatusInternalServerError)
 	defer server.Close()
 	// oauth2 Client will use the proxy client's base Transport
 	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, proxyClient)
@@ -89,9 +89,9 @@ func TestGithubHandler_ErrorGettingUser(t *testing.T) {
 		fmt.Fprintf(w, "failure handler called")
 	}
 
-	// GithubHandler cannot get Github User, assert that:
+	// GithubHandler cannot get GitHub User, assert that:
 	// - failure handler is called
-	// - error cannot get Github User added to the failure handler ctx
+	// - error cannot get GitHub User added to the failure handler ctx
 	githubHandler := githubHandler(config, false, success, http.HandlerFunc(failure))
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
@@ -122,8 +122,8 @@ func TestGithubHandler_Enterprise(t *testing.T) {
 	failure := testutils.AssertFailureNotCalled(t)
 
 	// GithubHandler assert that:
-	// - Token is read from the ctx and passed to the Github API
-	// - github User is obtained from the Github API
+	// - Token is read from the ctx and passed to the GitHub API
+	// - github User is obtained from the GitHub API
 	// - success handler is called
 	// - github User is added to the ctx of the success handler
 	githubHandler := githubHandler(config, true, http.HandlerFunc(success), failure)

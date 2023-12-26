@@ -31,11 +31,11 @@ Notable changes between releases.
 
 ## v2.1.0
 
-* Add `EnterpriseCallbackHandler` for Github Enterprise ([#33](https://github.com/dghubble/gologin/pull/33))
+* Add `EnterpriseCallbackHandler` for GitHub Enterprise ([#33](https://github.com/dghubble/gologin/pull/33))
 * Add email address to Facebook Users ([0acc88](https://github.com/dghubble/gologin/commit/0acc881e40b4926bbba0c02944ad5842700a0eab))
 * Update Facebook API version to v2.9 ([0acc88](https://github.com/dghubble/gologin/commit/0acc881e40b4926bbba0c02944ad5842700a0eab))
 * Fix facebook `CallbackHandler` to pass Facebook errors ([#31](https://github.com/dghubble/gologin/pull/31))
-* Fix Github Users.Get call to accomodate a `go-github` [change](https://github.com/google/go-github/pull/529) ([#18](https://github.com/dghubble/gologin/pull/18))
+* Fix GitHub Users.Get call to accomodate a `go-github` [change](https://github.com/google/go-github/pull/529) ([#18](https://github.com/dghubble/gologin/pull/18))
 * Remove deprecated `digits` subpackage ([#29](https://github.com/dghubble/gologin/pull/29))
 
 ## v2.0.0
@@ -63,12 +63,12 @@ Notable changes between releases.
 
 * Official release using the `ContextHandler`
 * Support for all OAuth1 and Oauth2 providers
-* Convenience handlers for Google, Github, Facebook, Bitbucket, Twitter, Digits, and Tumblr
+* Convenience handlers for Google, GitHub, Facebook, Bitbucket, Twitter, Digits, and Tumblr
 * Token login handlers for Twitter and Digits
 
 ## v0.1.0
 
 * Initial proof of concept
-* Web login handlers for Google, Github, Facebook, Bitbucket, Twitter, Digits, and Tumblr
+* Web login handlers for Google, GitHub, Facebook, Bitbucket, Twitter, Digits, and Tumblr
 * Token login handlers for Twitter and Digits
 * Support for OAuth1 and OAuth2
