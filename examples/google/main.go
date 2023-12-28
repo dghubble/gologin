@@ -59,6 +59,12 @@ func issueSession() http.Handler {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		log.Printf("## in issueSession.  githubUser: %+v \n", *googleUser)
+		if len(googleUser.Email) > 0 {
+			log.Printf("## in issueSession.  googleUser Email: %+v \n", googleUser.Email)
+		} else {
+			log.Println("## in issueSession.  googleUser Email is empty")
+		}
 		// 2. Implement a success handler to issue some form of session
 		session := sessionStore.New(sessionName)
 		session.Set(sessionUserKey, googleUser.Id)
@@ -76,8 +82,12 @@ func issueSession() http.Handler {
 func profileHandler(w http.ResponseWriter, req *http.Request) {
 	session, err := sessionStore.Get(req, sessionName)
 	if err != nil {
+		log.Printf("## in profileHandler, error sessionStore.Get : %v ", err)
 		// welcome with login button
-		page, _ := os.ReadFile("home.html")
+		page, err := os.ReadFile("/home/cgil/cgdev/golang/gologin/examples/google/home.html")
+		if err != nil {
+			log.Printf("## in profileHandler, error doing  os.ReadFile(home.html) : %v ", err)
+		}
 		fmt.Fprint(w, string(page))
 		return
 	}
