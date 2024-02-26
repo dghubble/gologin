@@ -22,8 +22,8 @@ github.com/dghubble/go-twitter v0.0.0-20221104224141-912508c3888b h1:XQu6o3AwJx/
 github.com/dghubble/go-twitter v0.0.0-20221104224141-912508c3888b/go.mod h1:B0/qdW5XUupJvcsx40hnVbfjzz9He5YpYXx6eVVdiSY=
 github.com/dghubble/gologin/v2 v2.5.0 h1:guLaBPqpj15CVchii7AZryKXo5joKOhQKMD4JXVjcac=
 github.com/dghubble/gologin/v2 v2.5.0/go.mod h1:DWAN9lekIL30iklV3yLWGNRo3ojtcSZUYnZ+5XpovTA=
-github.com/dghubble/oauth1 v0.7.2 h1:pwcinOZy8z6XkNxvPmUDY52M7RDPxt0Xw1zgZ6Cl5JA=
-github.com/dghubble/oauth1 v0.7.2/go.mod h1:9erQdIhqhOHG/7K9s/tgh9Ks/AfoyrO5mW/43Lu2+kE=
+github.com/dghubble/oauth1 v0.7.3 h1:EkEM/zMDMp3zOsX2DC/ZQ2vnEX3ELK0/l9kb+vs4ptE=
+github.com/dghubble/oauth1 v0.7.3/go.mod h1:oxTe+az9NSMIucDPDCCtzJGsPhciJV33xocHfcR2sVY=
 github.com/dghubble/sessions v0.4.1 h1:jjZF0PP50MXOK5JfxypG/FXO0cPRyuzV1NbIQBpragM=
 github.com/dghubble/sessions v0.4.1/go.mod h1:Txcz/yjkSTilPlH1XBothsHPALzG+Psx0vb1627kHRs=
 github.com/dghubble/sling v1.4.1 h1:AxjTubpVyozMvbBCtXcsWEyGGgUZutC5YGrfxPNVOcQ=
