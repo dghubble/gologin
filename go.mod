@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/dghubble/go-twitter v0.0.0-20221104224141-912508c3888b
 	github.com/dghubble/oauth1 v0.7.2
-	github.com/dghubble/sling v1.4.1
+	github.com/dghubble/sling v1.4.2
 	github.com/google/go-github/v52 v52.0.0
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/oauth2 v0.17.0
