@@ -4,6 +4,11 @@ Notable changes between releases.
 
 ## Latest
 
+## v2.5.0
+
+* Update Go module dependencies
+* Add a `Picture` field to the facebook `User` struct ([#150](https://github.com/dghubble/gologin/pull/150))
+
 ## v2.4.0
 
 * Add `SameSite` field to the oauth2 state `CookieConfig` ([#112](https://github.com/dghubble/gologin/pull/112))
