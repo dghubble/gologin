@@ -1,16 +1,12 @@
 changelog:
   categories:
-    - title: Changes
+    - title: Contributions
       labels:
         - '*'
       exclude:
         labels:
           - dependencies
-          - maintenance
           - no-release-note
-    - title: Maintenance
-      labels:
-        - maintenance
     - title: Dependencies
       labels:
         - dependencies
