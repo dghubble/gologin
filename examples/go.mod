@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/dghubble/gologin/v2 v2.5.0
-	github.com/dghubble/oauth1 v0.7.2
+	github.com/dghubble/oauth1 v0.7.3
 	github.com/dghubble/sessions v0.4.1
 	golang.org/x/oauth2 v0.17.0
 )
