@@ -1,0 +1,15 @@
+changelog:
+  categories:
+    - title: Changes
+      labels:
+        - '*'
+      exclude:
+        labels:
+          - dependencies
+          - no-release-note
+    - title: Maintenance
+      labels:
+        - maintenance
+    - title: 👒 Dependencies
+      labels:
+        - dependencies
