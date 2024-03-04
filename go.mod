@@ -7,7 +7,7 @@ require (
 	github.com/dghubble/oauth1 v0.7.3
 	github.com/dghubble/sling v1.4.2
 	github.com/google/go-github/v52 v52.0.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	golang.org/x/oauth2 v0.17.0
 	google.golang.org/api v0.167.0
 )
