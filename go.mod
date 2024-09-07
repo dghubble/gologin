@@ -1,12 +1,14 @@
 module github.com/dghubble/gologin/v2
 
-go 1.19
+go 1.21
+
+toolchain go1.23.0
 
 require (
 	github.com/dghubble/go-twitter v0.0.0-20221104224141-912508c3888b
 	github.com/dghubble/oauth1 v0.7.3
 	github.com/dghubble/sling v1.4.2
-	github.com/google/go-github/v52 v52.0.0
+	github.com/google/go-github/v64 v64.0.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/oauth2 v0.23.0
 	google.golang.org/api v0.192.0
