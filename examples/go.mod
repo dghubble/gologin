@@ -1,12 +1,14 @@
 module github.com/dghubble/gologin/v2/examples
 
-go 1.19
+go 1.23.0
+
+toolchain go1.24.0
 
 require (
 	github.com/dghubble/gologin/v2 v2.5.0
 	github.com/dghubble/oauth1 v0.7.3
 	github.com/dghubble/sessions v0.4.1
-	golang.org/x/oauth2 v0.26.0
+	golang.org/x/oauth2 v0.27.0
 )
 
 require (
