@@ -17,7 +17,7 @@ func newGithubTestServer(routePrefix, jsonData string) (*http.Client, *httptest.
 	client, mux, server := testutils.TestServer()
 	mux.HandleFunc(routePrefix+"/user", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, jsonData)
+		fmt.Fprint(w, jsonData)
 	})
 	return client, server
 }

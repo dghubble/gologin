@@ -16,7 +16,7 @@ func newTwitterVerifyServer(jsonData string) (*http.Client, *http.ServeMux, *htt
 	client, mux, server := testutils.TestServer()
 	mux.HandleFunc("/1.1/account/verify_credentials.json", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, jsonData)
+		fmt.Fprint(w, jsonData)
 	})
 	return client, mux, server
 }

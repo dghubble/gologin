@@ -15,7 +15,7 @@ func newFacebookTestServer(jsonData string) (*http.Client, *httptest.Server) {
 	client, mux, server := testutils.TestServer()
 	mux.HandleFunc("/v2.9/me", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, jsonData)
+		fmt.Fprint(w, jsonData)
 	})
 	return client, server
 }
