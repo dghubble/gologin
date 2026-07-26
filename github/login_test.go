@@ -10,14 +10,14 @@ import (
 	"github.com/dghubble/gologin/v2"
 	oauth2Login "github.com/dghubble/gologin/v2/oauth2"
 	"github.com/dghubble/gologin/v2/testutils"
-	"github.com/google/go-github/v64/github"
+	"github.com/google/go-github/v89/github"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/oauth2"
 )
 
 func TestGithubHandler(t *testing.T) {
 	jsonData := `{"id": 917408, "name": "Alyssa Hacker"}`
-	expectedUser := &github.User{ID: github.Int64(917408), Name: github.String("Alyssa Hacker")}
+	expectedUser := &github.User{ID: github.Ptr[int64](917408), Name: github.Ptr("Alyssa Hacker")}
 	proxyClient, server := newGithubTestServer("", jsonData)
 	defer server.Close()
 
@@ -101,7 +101,7 @@ func TestGithubHandler_ErrorGettingUser(t *testing.T) {
 
 func TestGithubHandler_Enterprise(t *testing.T) {
 	jsonData := `{"id": 917408, "name": "Alyssa Hacker"}`
-	expectedUser := &github.User{ID: github.Int64(917408), Name: github.String("Alyssa Hacker")}
+	expectedUser := &github.User{ID: github.Ptr[int64](917408), Name: github.Ptr("Alyssa Hacker")}
 	proxyClient, server := newGithubTestServer("/api/v3", jsonData)
 	defer server.Close()
 
@@ -134,7 +134,7 @@ func TestGithubHandler_Enterprise(t *testing.T) {
 }
 
 func TestValidateResponse(t *testing.T) {
-	validUser := &github.User{ID: github.Int64(123)}
+	validUser := &github.User{ID: github.Ptr[int64](123)}
 	validResponse := &github.Response{Response: &http.Response{StatusCode: 200}}
 	invalidResponse := &github.Response{Response: &http.Response{StatusCode: 500}}
 	assert.Equal(t, nil, validateResponse(validUser, validResponse, nil))
@@ -152,8 +152,8 @@ func Test_enterpriseGithubClientFromAuthURL(t *testing.T) {
 		{"http://github.mycompany.com/login/oauth/authorize", "http://github.mycompany.com/api/v3/"},
 	}
 	for _, c := range cases {
-		client, err := enterpriseGithubClientFromAuthURL(c.authURL, nil)
+		client, err := enterpriseGithubClientFromAuthURL(c.authURL, &http.Client{})
 		assert.Nil(t, err)
-		assert.Equal(t, client.BaseURL.String(), c.expClientBaseURL)
+		assert.Equal(t, c.expClientBaseURL, client.BaseURL())
 	}
 }

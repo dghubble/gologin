@@ -8,7 +8,7 @@ import (
 
 	"github.com/dghubble/gologin/v2"
 	oauth2Login "github.com/dghubble/gologin/v2/oauth2"
-	"github.com/google/go-github/v64/github"
+	"github.com/google/go-github/v89/github"
 	"golang.org/x/oauth2"
 )
 
@@ -74,13 +74,13 @@ func githubHandler(config *oauth2.Config, isEnterprise bool, success, failure ht
 		var githubClient *github.Client
 		if isEnterprise {
 			githubClient, err = enterpriseGithubClientFromAuthURL(config.Endpoint.AuthURL, httpClient)
-			if err != nil {
-				ctx = gologin.WithError(ctx, fmt.Errorf("github: error creating Client: %v", err))
-				failure.ServeHTTP(w, req.WithContext(ctx))
-				return
-			}
 		} else {
-			githubClient = github.NewClient(httpClient)
+			githubClient, err = github.NewClient(github.WithHTTPClient(httpClient))
+		}
+		if err != nil {
+			ctx = gologin.WithError(ctx, fmt.Errorf("github: error creating Client: %v", err))
+			failure.ServeHTTP(w, req.WithContext(ctx))
+			return
 		}
 		user, resp, err := githubClient.Users.Get(ctx, "")
 		err = validateResponse(user, resp, err)
@@ -109,17 +109,17 @@ func validateResponse(user *github.User, resp *github.Response, err error) error
 
 // enterpriseGithubClientFromAuthURL returns a GitHub client that targets a GHE instance.
 func enterpriseGithubClientFromAuthURL(authURL string, httpClient *http.Client) (*github.Client, error) {
-	client := github.NewClient(httpClient)
-
-	// convert authURL to GHE baseURL https://<mygithub>.com/api/v3/
+	// convert authURL to the GHE root URL, WithEnterpriseURLs appends the
+	// API paths to it (https://<mygithub>.com/api/v3/)
 	baseURL, err := url.Parse(authURL)
 	if err != nil {
 		return nil, fmt.Errorf("github: error parsing Endoint.AuthURL: %s", authURL)
 	}
 
-	baseURL.Path = "/api/v3/"
-	client.BaseURL = baseURL
-	client.UploadURL = baseURL
+	baseURL.Path = "/"
 
-	return client, nil
+	return github.NewClient(
+		github.WithHTTPClient(httpClient),
+		github.WithEnterpriseURLs(baseURL.String(), baseURL.String()),
+	)
 }
