@@ -4,6 +4,9 @@ Notable changes between releases.
 
 ## Latest
 
+* Upgrade `github.com/google/go-github` from v64 to v89
+  * GitHub Enterprise clients now use `/api/uploads/` as the upload URL, instead of the API base URL
+
 ## v2.5.0
 
 * Update Go module dependencies
