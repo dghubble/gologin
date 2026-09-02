@@ -1,6 +1,6 @@
 module github.com/dghubble/gologin/v2
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/dghubble/go-twitter v0.0.0-20221104224141-912508c3888b
@@ -9,7 +9,7 @@ require (
 	github.com/google/go-github/v64 v64.0.0
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/oauth2 v0.36.0
-	google.golang.org/api v0.296.0
+	google.golang.org/api v0.297.0
 )
 
 require (
