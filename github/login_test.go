@@ -150,10 +150,13 @@ func Test_enterpriseGithubClientFromAuthURL(t *testing.T) {
 	}{
 		{"https://github.mycompany.com/login/oauth/authorize", "https://github.mycompany.com/api/v3/"},
 		{"http://github.mycompany.com/login/oauth/authorize", "http://github.mycompany.com/api/v3/"},
+		{"https://api.mycompany.com/login/oauth/authorize", "https://api.mycompany.com/api/v3/"},
+		{"https://github.api.mycompany.com/login/oauth/authorize", "https://github.api.mycompany.com/api/v3/"},
 	}
 	for _, c := range cases {
 		client, err := enterpriseGithubClientFromAuthURL(c.authURL, &http.Client{})
 		assert.Nil(t, err)
 		assert.Equal(t, c.expClientBaseURL, client.BaseURL())
+		assert.Equal(t, c.expClientBaseURL, client.UploadURL())
 	}
 }

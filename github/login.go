@@ -109,17 +109,17 @@ func validateResponse(user *github.User, resp *github.Response, err error) error
 
 // enterpriseGithubClientFromAuthURL returns a GitHub client that targets a GHE instance.
 func enterpriseGithubClientFromAuthURL(authURL string, httpClient *http.Client) (*github.Client, error) {
-	// convert authURL to the GHE root URL, WithEnterpriseURLs appends the
-	// API paths to it (https://<mygithub>.com/api/v3/)
+	// convert authURL to GHE baseURL https://<mygithub>.com/api/v3/
 	baseURL, err := url.Parse(authURL)
 	if err != nil {
 		return nil, fmt.Errorf("github: error parsing Endoint.AuthURL: %s", authURL)
 	}
 
-	baseURL.Path = "/"
+	baseURL.Path = "/api/v3/"
+	clientURL := baseURL.String()
 
 	return github.NewClient(
 		github.WithHTTPClient(httpClient),
-		github.WithEnterpriseURLs(baseURL.String(), baseURL.String()),
+		github.WithURLs(&clientURL, &clientURL),
 	)
 }
